@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TrailQR Raksha — Check a QR before you pay</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header>
+  <h1>TrailQR Raksha</h1>
+  <p class="tag">Check any QR before you pay — built for the streets of West Bengal.<br>
+  <strong>The rules decide. Gemma explains. Nothing sensitive leaves your phone unsanitised.</strong></p>
+</header>
+
+<main>
+  <section class="card">
+    <h2>1 · What are you scanning?</h2>
+    <label>Decoded QR text <span class="hint">(paste it, pick a sample, or use the camera if your browser supports it)</span>
+      <textarea id="payload" rows="3" placeholder="upi://pay?pa=...&pn=...  or  https://..."></textarea>
+    </label>
+    <div class="row">
+      <label>What name is on the shop / sign? <span class="hint">(optional, catches sticker swaps)</span>
+        <input id="expected" type="text" placeholder="e.g. Chai Dukaan">
+      </label>
+      <label>Area <span class="hint">(neighbourhood only — never exact GPS)</span>
+        <input id="area" type="text" placeholder="e.g. Rabindra Sarobar, Kolkata">
+      </label>
+    </div>
+    <div class="row" id="samples"></div>
+    <div class="row">
+      <button id="analyse" class="primary">Check this QR</button>
+      <button id="scan">Scan with camera</button>
+      <video id="video" playsinline hidden></video>
+    </div>
+    <p class="hint" id="scanNote"></p>
+  </section>
+
+  <section class="card" id="resultCard" hidden>
+    <h2>2 · Verdict</h2>
+    <div id="verdict" class="verdict"></div>
+    <p id="summary"></p>
+    <ul id="flags"></ul>
+    <h3>Gemma explains <span class="hint" id="gemmaMode"></span></h3>
+    <pre id="explanation"></pre>
+    <div id="questBox" hidden>
+      <h3>Trail quest</h3>
+      <p id="quest"></p>
+    </div>
+    <div class="row">
+      <button id="report" class="danger">Report this QR</button>
+      <button id="saveSafe">Add scrubbed find to registry</button>
+    </div>
+    <p class="hint">Only a scrubbed row is stored: a hash of the payload, display name, category, coarse area, verdict and a masked payee. Never the raw QR, full payee address, amount, or exact location.</p>
+  </section>
+
+  <section class="card">
+    <h2>3 · Community registry <span class="hint">(scrubbed rows only — same columns as the Snowflake table)</span></h2>
+    <div id="registryEmpty" class="hint">No finds logged yet. Check a QR above to start.</div>
+    <table id="registryTable" hidden>
+      <thead><tr><th>Hash</th><th>Name</th><th>Area</th><th>Verdict</th><th>Score</th><th>Reported</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <div class="row"><button id="exportCsv">Export CSV for Snowflake</button></div>
+  </section>
+</main>
+
+<footer>
+  <p>Open-source (MIT) · Gemma 4 explains, deterministic rules decide · Demo works fully offline with scripted fallbacks.
+  Limitations: we cannot verify the ultimate owner of a UPI ID, and new phishing domains may not be flagged yet — see README.</p>
+</footer>
+
+<script src="config.js"></script>
+<script src="js/rules.js"></script>
+<script src="js/samples.js"></script>
+<script src="js/gemma.js"></script>
+<script src="js/registry.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

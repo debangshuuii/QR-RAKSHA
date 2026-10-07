@@ -234,7 +234,7 @@
     }
 
     // Specifications Summary
-    $("summary").innerHTML = '<strong>Kind:</strong> <span style="color:var(--signal-cyan);">' + (r.kind || "text").toUpperCase() + '</span> · ' +
+    $("summary").innerHTML = '<strong>Kind:</strong> <span style="color:var(--text-primary);font-weight:600;">' + (r.kind || "text").toUpperCase() + '</span> · ' +
       '<strong>Decoded Name:</strong> ' + (r.displayName ? '<strong>' + r.displayName + '</strong>' : '<em>(None)</em>') +
       (r.maskedPayee ? ' · <strong>Masked Payee:</strong> <code style="color:var(--signal-safe);">' + r.maskedPayee + '</code>' : '');
 

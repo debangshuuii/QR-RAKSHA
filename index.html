@@ -4,70 +4,281 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>TrailQR Raksha — Check a QR before you pay</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+
 <header>
-  <h1>TrailQR Raksha</h1>
-  <p class="tag">Check any QR before you pay — built for the streets of West Bengal.<br>
-  <strong>The rules decide. Gemma explains. Nothing sensitive leaves your phone unsanitised.</strong></p>
+  <div class="header-container">
+    <div class="brand-row">
+      <div class="brand-title-group">
+        <div class="brand-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="M9 12l2 2 4-4"/>
+          </svg>
+        </div>
+        <div>
+          <h1>
+            TrailQR Raksha
+            <span class="bengali-pill">ট্রেইলকিউআর সুরক্ষা</span>
+          </h1>
+        </div>
+      </div>
+      <div class="live-badge">
+        <span class="pulse-dot"></span>
+        <span>Local Shield Active</span>
+      </div>
+    </div>
+
+    <p class="tag">
+      Check any QR before you pay — built for the bustling streets and tea stalls of West Bengal.<br>
+      <strong>The deterministic rules decide. Gemma 4 explains. Zero sensitive data leaves your phone unsanitised.</strong>
+    </p>
+
+    <div class="street-tags-strip">
+      <span class="street-tag">⚡ 100% Offline Capable</span>
+      <span class="street-tag">🛡️ Anti-Sticker-Swap</span>
+      <span class="street-tag">🔒 Zero PII Exposed</span>
+      <span class="street-tag">❄️ Snowflake CoCo Ready</span>
+      <span class="street-tag">🎯 OWASP AI in Cyber</span>
+    </div>
+
+    <div class="stats-strip">
+      <div class="stat-item">
+        <span class="stat-label">Audits Logged</span>
+        <span class="stat-value" id="statTotalAudits">0</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Scams Blocked</span>
+        <span class="stat-value" id="statThreats" style="color: var(--accent-danger);">0</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Safe Payees Verified</span>
+        <span class="stat-value" id="statSafe" style="color: var(--accent-safe);">0</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Data Minimisation</span>
+        <span class="stat-value" style="color: var(--accent-cyan);">100% Client-Side</span>
+      </div>
+    </div>
+  </div>
 </header>
 
 <main>
+  <!-- SECTION 1: SCANNER & INPUT -->
   <section class="card">
-    <h2>1 · What are you scanning?</h2>
-    <label>Decoded QR text <span class="hint">(paste it, pick a sample, or use the camera if your browser supports it)</span>
-      <textarea id="payload" rows="3" placeholder="upi://pay?pa=...&pn=...  or  https://..."></textarea>
-    </label>
+    <h2>
+      <span class="section-num">01</span>
+      What are you scanning?
+    </h2>
+
+    <div class="samples-container">
+      <div class="samples-header">
+        <span class="samples-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+          </svg>
+          Quick Street Scenarios (Click to test instantly):
+        </span>
+      </div>
+      <div id="samples"></div>
+    </div>
+
+    <div class="input-with-tools">
+      <label for="payload">
+        Decoded QR text 
+        <span class="hint">(paste payload, pick sample above, or use camera below)</span>
+      </label>
+      <textarea id="payload" rows="3" placeholder="upi://pay?pa=...&pn=...  or  https://...  or raw text"></textarea>
+      <div class="input-quick-actions">
+        <button type="button" id="pasteBtn" class="micro-btn">📋 Paste Clipboard</button>
+        <button type="button" id="clearBtn" class="micro-btn">🧹 Clear</button>
+      </div>
+    </div>
+
     <div class="row">
-      <label>What name is on the shop / sign? <span class="hint">(optional, catches sticker swaps)</span>
+      <label for="expected">
+        What name is on the shop / sign?
+        <span class="hint">(catches sticker swaps)</span>
         <input id="expected" type="text" placeholder="e.g. Chai Dukaan">
       </label>
-      <label>Area <span class="hint">(neighbourhood only — never exact GPS)</span>
+      <label for="area">
+        Area / Neighbourhood
+        <span class="hint">(coarse locality only — never exact GPS)</span>
         <input id="area" type="text" placeholder="e.g. Rabindra Sarobar, Kolkata">
       </label>
     </div>
-    <div class="row" id="samples"></div>
-    <div class="row">
-      <button id="analyse" class="primary">Check this QR</button>
-      <button id="scan">Scan with camera</button>
-      <video id="video" playsinline hidden></video>
+
+    <div class="row" style="margin-top: 18px;">
+      <button id="analyse" class="primary">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          <path d="M9 12l2 2 4-4"/>
+        </svg>
+        Check this QR
+      </button>
+      <button id="scan" type="button">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+          <circle cx="12" cy="13" r="4"/>
+        </svg>
+        Scan with camera
+      </button>
     </div>
+
+    <div class="camera-box" id="cameraBox" hidden>
+      <video id="video" playsinline hidden></video>
+      <div class="laser-line"></div>
+    </div>
+
     <p class="hint" id="scanNote"></p>
   </section>
 
+  <!-- SECTION 2: VERDICT & AI INTEL -->
   <section class="card" id="resultCard" hidden>
-    <h2>2 · Verdict</h2>
-    <div id="verdict" class="verdict"></div>
-    <p id="summary"></p>
+    <h2>
+      <span class="section-num">02</span>
+      Security Audit Verdict
+    </h2>
+
+    <div class="verdict-header">
+      <div id="verdict" class="verdict"></div>
+    </div>
+
+    <!-- Threat Score Bar -->
+    <div class="score-meter-wrap">
+      <div class="score-meter-header">
+        <span>THREAT RISK SCORE</span>
+        <span id="scoreText">0 / 100</span>
+      </div>
+      <div class="score-track" id="scoreTrack">
+        <div class="score-fill" id="scoreFill"></div>
+      </div>
+      <div class="score-labels">
+        <span>0 SAFE</span>
+        <span>25 LOW</span>
+        <span>50 SUSPICIOUS</span>
+        <span>75 DANGER</span>
+        <span>100 CRITICAL</span>
+      </div>
+    </div>
+
+    <div id="summary"></div>
+
+    <h3 style="font-family: var(--font-display); font-size: 15px; margin: 18px 0 10px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em;">
+      Deterministic Risk Rules Triggered:
+    </h3>
     <ul id="flags"></ul>
-    <h3>Gemma explains <span class="hint" id="gemmaMode"></span></h3>
-    <pre id="explanation"></pre>
+
+    <!-- Gemma 4 Intel Card -->
+    <div class="gemma-section">
+      <div class="gemma-header">
+        <h3>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 14.5h-2v-2h2zm0-4.5h-2V7h2z"/>
+          </svg>
+          Gemma AI Intelligence Debrief
+        </h3>
+        <span class="gemma-terminal-badge" id="gemmaMode"></span>
+      </div>
+      <pre id="explanation"></pre>
+    </div>
+
+    <!-- Safe Trail Quest -->
     <div id="questBox" hidden>
-      <h3>Trail quest</h3>
+      <h3>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
+        </svg>
+        Trail Quest Unlocked
+      </h3>
       <p id="quest"></p>
     </div>
-    <div class="row">
-      <button id="report" class="danger">Report this QR</button>
-      <button id="saveSafe">Add scrubbed find to registry</button>
+
+    <div class="row" style="margin-top: 20px;">
+      <button id="report" class="danger">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        Report this QR Fraud
+      </button>
+      <button id="saveSafe">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+          <polyline points="17 21 17 13 7 13 7 21"/>
+          <polyline points="7 3 7 8 15 8"/>
+        </svg>
+        Add scrubbed find to registry
+      </button>
     </div>
-    <p class="hint">Only a scrubbed row is stored: a hash of the payload, display name, category, coarse area, verdict and a masked payee. Never the raw QR, full payee address, amount, or exact location.</p>
+
+    <p class="hint" style="margin-top: 14px; line-height: 1.5;">
+      🛡️ <strong>Zero-PII Guarantee:</strong> Only a scrubbed row is logged — cryptographic FNV-1a hash, display name, category, coarse neighbourhood, score and masked payee. Never raw QR payloads, full bank accounts, transaction amounts, or GPS coordinates.
+    </p>
   </section>
 
+  <!-- SECTION 3: COMMUNITY REGISTRY -->
   <section class="card">
-    <h2>3 · Community registry <span class="hint">(scrubbed rows only — same columns as the Snowflake table)</span></h2>
-    <div id="registryEmpty" class="hint">No finds logged yet. Check a QR above to start.</div>
-    <table id="registryTable" hidden>
-      <thead><tr><th>Hash</th><th>Name</th><th>Area</th><th>Verdict</th><th>Score</th><th>Reported</th></tr></thead>
-      <tbody></tbody>
-    </table>
-    <div class="row"><button id="exportCsv">Export CSV for Snowflake</button></div>
+    <div class="registry-tools">
+      <h2>
+        <span class="section-num">03</span>
+        Community Registry
+        <span class="hint">(Snowflake Sync Table)</span>
+      </h2>
+    </div>
+
+    <div id="registryEmpty" class="hint">
+      No finds logged yet. Select a sample above or scan a QR to initiate audit log.
+    </div>
+
+    <div class="table-wrapper">
+      <table id="registryTable" hidden>
+        <thead>
+          <tr>
+            <th>Hash (FNV-1a)</th>
+            <th>Name</th>
+            <th>Area</th>
+            <th>Verdict</th>
+            <th>Score</th>
+            <th>Reported</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="row">
+      <button id="exportCsv">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Export CSV for Snowflake
+      </button>
+    </div>
   </section>
 </main>
 
 <footer>
-  <p>Open-source (MIT) · Gemma 4 explains, deterministic rules decide · Demo works fully offline with scripted fallbacks.
-  Limitations: we cannot verify the ultimate owner of a UPI ID, and new phishing domains may not be flagged yet — see README.</p>
+  <p>
+    <strong>TrailQR Raksha</strong> · Open-source (MIT) · Built for Kolkata & West Bengal Street Defense.<br>
+    Deterministic 14-heuristic rule engine decides · Google Gemma 4 explains · Snowflake CoCo threat correlation.<br>
+    <em>Limitation Notice:</em> Client-side rules flag red-flag indicators; always verify the payee name in your payment app before entering PIN.
+  </p>
+  <div class="footer-badges">
+    <span class="street-tag">MIT LICENSE</span>
+    <span class="street-tag">OWASP JIS UNIVERSITY</span>
+    <span class="street-tag">GOOGLE GEMMA 4</span>
+    <span class="street-tag">SNOWFLAKE COCO</span>
+  </div>
 </footer>
 
 <script src="config.js"></script>

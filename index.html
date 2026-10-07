@@ -28,41 +28,48 @@
           </h1>
         </div>
       </div>
-      <div class="live-badge">
-        <span class="pulse-dot"></span>
-        <span>Local Shield Active</span>
+      
+      <div class="header-controls">
+        <button type="button" id="soundToggle" class="sound-toggle-btn active" title="Toggle tactile pencil audio feedback">
+          <span id="soundIcon">🔊</span>
+          <span id="soundLabel">Audio Active</span>
+        </button>
+        <div class="live-badge">
+          <span class="pulse-dot"></span>
+          <span>Shield Active</span>
+        </div>
       </div>
     </div>
 
     <p class="tag">
-      Check any QR before you pay — built for the bustling streets and tea stalls of West Bengal.<br>
-      <strong>The deterministic rules decide. Gemma 4 explains. Zero sensitive data leaves your phone unsanitised.</strong>
+      Check any QR before you pay — engineered for the streets and tea stalls of West Bengal.<br>
+      <strong>Deterministic rules decide. Gemma 4 explains. Nothing sensitive leaves your phone unsanitised.</strong>
     </p>
 
-    <div class="street-tags-strip">
-      <span class="street-tag">⚡ 100% Offline Capable</span>
-      <span class="street-tag">🛡️ Anti-Sticker-Swap</span>
-      <span class="street-tag">🔒 Zero PII Exposed</span>
-      <span class="street-tag">❄️ Snowflake CoCo Ready</span>
-      <span class="street-tag">🎯 OWASP AI in Cyber</span>
+    <div class="drafting-tags-strip">
+      <span class="drafting-tag">⌖ 2H Drafting Matrix</span>
+      <span class="drafting-tag">✎ Zero PII Sanitised</span>
+      <span class="drafting-tag">🛡️ Anti-Sticker-Swap</span>
+      <span class="drafting-tag">❄️ Snowflake CoCo Schema</span>
+      <span class="drafting-tag">🤖 Gemma 4 Vernacular</span>
     </div>
 
     <div class="stats-strip">
       <div class="stat-item">
-        <span class="stat-label">Audits Logged</span>
+        <span class="stat-label">Street Audits Logged</span>
         <span class="stat-value" id="statTotalAudits">0</span>
       </div>
       <div class="stat-item">
         <span class="stat-label">Scams Blocked</span>
-        <span class="stat-value" id="statThreats" style="color: var(--accent-danger);">0</span>
+        <span class="stat-value" id="statThreats" style="color: var(--signal-danger);">0</span>
       </div>
       <div class="stat-item">
         <span class="stat-label">Safe Payees Verified</span>
-        <span class="stat-value" id="statSafe" style="color: var(--accent-safe);">0</span>
+        <span class="stat-value" id="statSafe" style="color: var(--signal-safe);">0</span>
       </div>
       <div class="stat-item">
-        <span class="stat-label">Data Minimisation</span>
-        <span class="stat-value" style="color: var(--accent-cyan);">100% Client-Side</span>
+        <span class="stat-label">Privacy Guarantee</span>
+        <span class="stat-value" style="color: var(--signal-cyan);">100% Client-Side</span>
       </div>
     </div>
   </div>
@@ -74,6 +81,7 @@
     <h2>
       <span class="section-num">01</span>
       What are you scanning?
+      <span class="marginalia" style="margin-left: auto;">✎ "Select preset or paste raw payload"</span>
     </h2>
 
     <div class="samples-container">
@@ -143,6 +151,7 @@
     <h2>
       <span class="section-num">02</span>
       Security Audit Verdict
+      <span class="marginalia" style="margin-left: auto;">✎ "Deterministic heuristic breakdown"</span>
     </h2>
 
     <div class="verdict-header">
@@ -160,7 +169,7 @@
       </div>
       <div class="score-labels">
         <span>0 SAFE</span>
-        <span>25 LOW</span>
+        <span>25 LOW RISK</span>
         <span>50 SUSPICIOUS</span>
         <span>75 DANGER</span>
         <span>100 CRITICAL</span>
@@ -169,8 +178,8 @@
 
     <div id="summary"></div>
 
-    <h3 style="font-family: var(--font-display); font-size: 15px; margin: 18px 0 10px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em;">
-      Deterministic Risk Rules Triggered:
+    <h3 style="font-family: var(--font-display); font-size: 14.5px; margin: 18px 0 10px; color: var(--chalk-muted); text-transform: uppercase; letter-spacing: 0.05em;">
+      Deterministic Heuristic Red Flags:
     </h3>
     <ul id="flags"></ul>
 
@@ -232,6 +241,7 @@
         Community Registry
         <span class="hint">(Snowflake Sync Table)</span>
       </h2>
+      <span class="marginalia">✎ "Columns mirror snowflake/schema.sql"</span>
     </div>
 
     <div id="registryEmpty" class="hint">
@@ -274,10 +284,11 @@
     <em>Limitation Notice:</em> Client-side rules flag red-flag indicators; always verify the payee name in your payment app before entering PIN.
   </p>
   <div class="footer-badges">
-    <span class="street-tag">MIT LICENSE</span>
-    <span class="street-tag">OWASP JIS UNIVERSITY</span>
-    <span class="street-tag">GOOGLE GEMMA 4</span>
-    <span class="street-tag">SNOWFLAKE COCO</span>
+    <span class="drafting-tag">MIT LICENSE</span>
+    <span class="drafting-tag">OWASP JIS UNIVERSITY</span>
+    <span class="drafting-tag">GOOGLE GEMMA 4</span>
+    <span class="drafting-tag">SNOWFLAKE COCO</span>
+    <span class="drafting-tag">GRAPHITE + TASTE</span>
   </div>
 </footer>
 

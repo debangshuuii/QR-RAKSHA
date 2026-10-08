@@ -667,8 +667,13 @@ textarea:focus, input[type="text"]:focus {
 }
 
 /* Upload Preview Box */
+[hidden],
+.upload-preview-box[hidden] {
+  display: none !important;
+}
+
 .upload-preview-box {
-  display: flex;
+  display: none;
   align-items: center;
   gap: 12px;
   padding: 10px 14px;
@@ -676,6 +681,10 @@ textarea:focus, input[type="text"]:focus {
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-md);
   margin: 12px 0;
+}
+
+.upload-preview-box.active {
+  display: flex !important;
 }
 
 .upload-preview-thumb-wrap {
@@ -1128,6 +1137,11 @@ video {
 #threatMapContainer {
   height: 480px;
   width: 100%;
+}
+
+/* Dark tactical styling for OpenStreetMap tiles to match graphite palette */
+.threat-map-wrapper .leaflet-tile {
+  filter: brightness(0.82) invert(1) contrast(2.4) hue-rotate(195deg) saturate(0.2);
 }
 
 .map-legend-bar {

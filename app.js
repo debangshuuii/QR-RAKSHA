@@ -744,7 +744,11 @@
   // -------------------------------------------------------------
   function clearUploadedImage() {
     var box = $("uploadPreviewBox");
-    if (box) box.hidden = true;
+    if (box) {
+      box.hidden = true;
+      box.style.display = "none";
+      box.classList.remove("active");
+    }
     var fileInput = $("qrFileInput");
     if (fileInput) fileInput.value = "";
     var previewImg = $("uploadPreviewImg");
@@ -754,11 +758,15 @@
       }
       previewImg.src = "";
     }
+    var filenameEl = $("uploadFilename");
+    if (filenameEl) filenameEl.textContent = "";
     var badge = $("uploadStatusBadge");
     if (badge) {
       badge.className = "upload-preview-status";
-      badge.textContent = "Ready";
+      badge.textContent = "";
     }
+    var metaEl = $("uploadMeta");
+    if (metaEl) metaEl.textContent = "";
   }
 
   function formatBytes(bytes) {
@@ -920,7 +928,11 @@
     var statusBadge = $("uploadStatusBadge");
     var metaEl = $("uploadMeta");
 
-    if (box) box.hidden = false;
+    if (box) {
+      box.hidden = false;
+      box.style.display = "flex";
+      box.classList.add("active");
+    }
     if (filenameEl) filenameEl.textContent = fileName;
     if (statusBadge) {
       statusBadge.className = "upload-preview-status";
@@ -1015,6 +1027,8 @@
     removeUploadBtn.addEventListener("click", function () {
       playPencilTap();
       clearUploadedImage();
+      $("payload").value = "";
+      if ($("resultCard")) $("resultCard").hidden = true;
       $("scanNote").textContent = "Uploaded image removed.";
     });
   }
@@ -1069,6 +1083,9 @@
       }
     }
   });
+
+  // Reset upload box state on load
+  clearUploadedImage();
 
   // Apply initial translations & registry render
   if (window.TrailQRI18n) {

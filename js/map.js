@@ -111,10 +111,10 @@
         scrollWheelZoom: false
       });
 
-      // Sleek dark CartoDB tiles matching the blueprint graphite theme
-      L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
-        subdomains: "abcd",
+      // Free public OpenStreetMap tiles (No API key required)
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors',
+        subdomains: ["a", "b", "c"],
         maxZoom: 19
       }).addTo(mapInstance);
 

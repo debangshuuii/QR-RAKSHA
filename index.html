@@ -96,16 +96,42 @@
       <div id="samples"></div>
     </div>
 
-    <div class="input-with-tools">
+    <div class="input-with-tools" id="inputContainer">
       <label for="payload">
         Decoded QR text 
-        <span class="hint">(paste payload, pick sample above, or use camera below)</span>
+        <span class="hint">(paste payload, upload QR image, or scan with camera)</span>
       </label>
-      <textarea id="payload" rows="3" placeholder="upi://pay?pa=...&pn=...  or  https://...  or raw text"></textarea>
+      <div class="dropzone-wrap" id="dropzoneWrap">
+        <textarea id="payload" rows="3" placeholder="upi://pay?pa=...&pn=...  or  https://...  or drop / paste QR image"></textarea>
+        <div class="drop-overlay" id="dropOverlay">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          <span>Drop QR image here to scan</span>
+        </div>
+      </div>
       <div class="input-quick-actions">
+        <button type="button" id="uploadMicroBtn" class="micro-btn">📷 Upload Image</button>
         <button type="button" id="pasteBtn" class="micro-btn">📋 Paste Clipboard</button>
         <button type="button" id="clearBtn" class="micro-btn">🧹 Clear</button>
       </div>
+    </div>
+
+    <!-- Uploaded Image Preview & Status Card -->
+    <div class="upload-preview-box" id="uploadPreviewBox" hidden>
+      <div class="upload-preview-thumb-wrap">
+        <img id="uploadPreviewImg" alt="Uploaded QR preview" class="upload-preview-thumb">
+      </div>
+      <div class="upload-preview-details">
+        <div class="upload-preview-header">
+          <span class="upload-preview-filename" id="uploadFilename">qr-image.png</span>
+          <span class="upload-preview-status" id="uploadStatusBadge">Scanning...</span>
+        </div>
+        <div class="upload-preview-meta" id="uploadMeta">Ready</div>
+      </div>
+      <button type="button" id="removeUploadBtn" class="micro-btn upload-close-btn" title="Remove uploaded image">✕</button>
     </div>
 
     <div class="row">
@@ -129,6 +155,14 @@
         </svg>
         Check this QR
       </button>
+      <button id="uploadBtn" type="button">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        Upload QR image
+      </button>
       <button id="scan" type="button">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
@@ -136,10 +170,12 @@
         </svg>
         Scan with camera
       </button>
+      <input type="file" id="qrFileInput" accept="image/*" style="display:none">
     </div>
 
     <div class="camera-box" id="cameraBox" hidden>
       <video id="video" playsinline hidden></video>
+      <canvas id="qrCanvas" hidden></canvas>
       <div class="laser-line"></div>
     </div>
 
@@ -297,6 +333,8 @@
 <script src="js/samples.js"></script>
 <script src="js/gemma.js"></script>
 <script src="js/registry.js"></script>
+<script src="js/zxing.min.js"></script>
+<script src="js/jsQR.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

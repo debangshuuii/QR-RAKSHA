@@ -86,7 +86,7 @@
   // -------------------------------------------------------------
   (window.TRAILQR_SAMPLES || []).forEach(function (s, idx) {
     var b = document.createElement("button");
-    var icon = idx === 0 ? "🍵" : (idx === 1 ? "⚠️" : "🚨");
+    var icon = idx === 0 ? "🍵" : (idx === 1 ? "⚠️" : (idx === 2 ? "🚨" : "🏛️"));
     var parts = s.label.split(" — ");
     var title = parts[0] || s.label;
     var sub = parts[1] || "";
@@ -101,6 +101,7 @@
       for (var i = 0; i < all.length; i++) { all[i].classList.remove("active-sample"); }
       b.classList.add("active-sample");
 
+      clearUploadedImage();
       $("payload").value = s.payload;
       $("expected").value = s.expectedName || "";
       $("area").value = s.area || "";
@@ -118,13 +119,32 @@
     pasteBtn.addEventListener("click", async function () {
       playPencilTap();
       try {
+        if (navigator.clipboard && navigator.clipboard.read) {
+          try {
+            var items = await navigator.clipboard.read();
+            for (var i = 0; i < items.length; i++) {
+              var item = items[i];
+              for (var j = 0; j < item.types.length; j++) {
+                var t = item.types[j];
+                if (t.startsWith("image/")) {
+                  var blob = await item.getType(t);
+                  handleImageFile(blob, "Clipboard Image.png");
+                  return;
+                }
+              }
+            }
+          } catch (clipErr) {
+            // Fall back to readText
+          }
+        }
         var text = await navigator.clipboard.readText();
         if (text) {
+          clearUploadedImage();
           $("payload").value = text;
           run();
         }
       } catch (e) {
-        $("scanNote").textContent = "Clipboard permission denied. Please paste directly into the box.";
+        $("scanNote").textContent = "Clipboard permission denied. Please paste directly into the box or upload an image.";
       }
     });
   }
@@ -133,6 +153,7 @@
   if (clearBtn) {
     clearBtn.addEventListener("click", function () {
       playPencilTap();
+      clearUploadedImage();
       $("payload").value = "";
       $("expected").value = "";
       $("area").value = "";
@@ -234,9 +255,27 @@
     }
 
     // Specifications Summary
-    $("summary").innerHTML = '<strong>Kind:</strong> <span style="color:var(--text-primary);font-weight:600;">' + (r.kind || "text").toUpperCase() + '</span> · ' +
-      '<strong>Decoded Name:</strong> ' + (r.displayName ? '<strong>' + r.displayName + '</strong>' : '<em>(None)</em>') +
-      (r.maskedPayee ? ' · <strong>Masked Payee:</strong> <code style="color:var(--signal-safe);">' + r.maskedPayee + '</code>' : '');
+    var kindBadge = "";
+    if (r.kind === "upi_merchant") {
+      kindBadge = '<span style="color:var(--signal-safe);font-weight:700;">OFFICIAL BHARATQR BUSINESS ACCOUNT</span>';
+    } else if (r.kind === "upi") {
+      kindBadge = '<span style="color:var(--signal-safe);font-weight:600;">UPI PEER / SHOP</span>';
+    } else {
+      kindBadge = '<span style="color:var(--text-primary);font-weight:600;">' + (r.kind || "text").toUpperCase() + '</span>';
+    }
+
+    var extraDetails = "";
+    if (r.merchantCategory) {
+      extraDetails += ' · <strong>Category:</strong> <span style="color:var(--text-primary);">' + r.merchantCategory + '</span>';
+    }
+    if (r.city || r.pin) {
+      extraDetails += ' · <strong>Location:</strong> <span style="color:var(--text-secondary);">' + [r.city, r.pin].filter(Boolean).join(", ") + '</span>';
+    }
+
+    $("summary").innerHTML = '<strong>Kind:</strong> ' + kindBadge + ' · ' +
+      '<strong>' + (r.kind === "upi_merchant" ? "Registered Business:" : "Decoded Name:") + '</strong> ' + (r.displayName ? '<strong>' + r.displayName + '</strong>' : '<em>(None)</em>') +
+      (r.maskedPayee ? ' · <strong>Masked Payee:</strong> <code style="color:var(--signal-safe);">' + r.maskedPayee + '</code>' : '') +
+      extraDetails;
 
     // Flags Breakdown
     var ul = $("flags");
@@ -300,40 +339,460 @@
     URL.revokeObjectURL(a.href);
   });
 
-  // Camera QR scan support
+  // Camera QR scan support — native BarcodeDetector where available
+  // (macOS/ChromeOS/Android), jsQR polyfill fallback for Windows/desktop
+  // Edge/Chrome where the native API exists but has no OS backend.
+  var activeStream = null, activeTick = null;
+  function stopCamera() {
+    if (activeTick) { clearInterval(activeTick); activeTick = null; }
+    if (activeStream) { activeStream.getTracks().forEach(function (t) { t.stop(); }); activeStream = null; }
+  }
   $("scan").addEventListener("click", async function () {
     playPencilTap();
     var cameraBox = $("cameraBox");
-    if (!("BarcodeDetector" in window) || !navigator.mediaDevices) {
-      $("scanNote").textContent = "Camera QR detection isn't supported in this browser — paste the text or use a street sample above. The demo does not depend on camera hardware.";
+    var video = $("video");
+    var canvas = $("qrCanvas");
+    // Toggle off if already scanning
+    if (activeStream) {
+      stopCamera();
+      if (video) video.hidden = true;
+      if (cameraBox) cameraBox.hidden = true;
+      $("scanNote").textContent = "Camera stopped. Paste text, upload an image, or use a street sample above.";
+      return;
+    }
+    clearUploadedImage();
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      $("scanNote").textContent = "Camera needs a secure context — open via http://localhost:8000 (not file://), then allow camera. Upload an image or paste text meanwhile.";
       return;
     }
     try {
       var stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-      var video = $("video");
+      activeStream = stream;
       if (cameraBox) cameraBox.hidden = false;
       video.hidden = false;
       video.srcObject = stream;
+      video.muted = true;
       await video.play();
 
-      var detector = new BarcodeDetector({ formats: ["qr_code"] });
-      $("scanNote").textContent = "Targeting QR reticle… point camera directly at code.";
-      var tick = setInterval(async function () {
+      var useNative = ("BarcodeDetector" in window);
+      var detector = null;
+      if (useNative) {
+        try { detector = new BarcodeDetector({ formats: ["qr_code"] }); }
+        catch (e) { detector = null; useNative = false; }
+      }
+      var jsQRFn = (typeof jsQR !== "undefined") ? jsQR : (window.jsQR || null);
+      if (!useNative && !jsQRFn) {
+        $("scanNote").textContent = "Scanner library (js/jsQR.js) failed to load — upload an image, paste text, or use a street sample above.";
+        return;
+      }
+      $("scanNote").textContent = useNative
+        ? "Targeting QR reticle… point camera directly at code. Tap Scan again to stop."
+        : "Targeting QR reticle (compatibility mode)… point camera directly at code. Tap Scan again to stop.";
+      var ctx = canvas ? canvas.getContext("2d", { willReadFrequently: true }) : null;
+      activeTick = setInterval(async function () {
+        if (!video.videoWidth) return;
         try {
-          var codes = await detector.detect(video);
-          if (codes && codes.length) {
-            clearInterval(tick);
-            stream.getTracks().forEach(function (t) { t.stop(); });
-            video.hidden = true;
-            if (cameraBox) cameraBox.hidden = true;
-            $("payload").value = codes[0].rawValue || "";
-            run();
+          // 1. Try native detector if available
+          if (useNative && detector) {
+            try {
+              var codes = await detector.detect(video);
+              if (codes && codes.length && codes[0].rawValue) {
+                stopCamera();
+                video.hidden = true;
+                if (cameraBox) cameraBox.hidden = true;
+                $("payload").value = codes[0].rawValue;
+                $("scanNote").textContent = "✓ QR captured via native detector.";
+                run();
+                return;
+              }
+            } catch (detErr) {}
+          }
+
+          // 2. High-speed software canvas scan (runs reliably on all platforms)
+          if (ctx && canvas) {
+            var w = video.videoWidth, h = video.videoHeight;
+            var scale = Math.min(1, 1280 / Math.max(w, h));
+            canvas.width = Math.floor(w * scale);
+            canvas.height = Math.floor(h * scale);
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Try jsQR
+            if (jsQRFn) {
+              var img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+              var res = jsQRFn(img.data, img.width, img.height, { inversionAttempts: "attemptBoth" });
+              if (res && res.data) {
+                stopCamera();
+                video.hidden = true;
+                if (cameraBox) cameraBox.hidden = true;
+                $("payload").value = res.data;
+                $("scanNote").textContent = "✓ QR captured via camera.";
+                run();
+                return;
+              }
+            }
+
+            // Try ZXing
+            if (window.ZXing && window.ZXing.QRCodeReader) {
+              try {
+                if (!window._zxingCamReader) window._zxingCamReader = new window.ZXing.QRCodeReader();
+                var lum = new window.ZXing.HTMLCanvasElementLuminanceSource(canvas);
+                var bmp = new window.ZXing.BinaryBitmap(new window.ZXing.HybridBinarizer(lum));
+                var zx = window._zxingCamReader.decode(bmp);
+                if (zx && zx.getText()) {
+                  stopCamera();
+                  video.hidden = true;
+                  if (cameraBox) cameraBox.hidden = true;
+                  $("payload").value = zx.getText();
+                  $("scanNote").textContent = "✓ QR captured via camera (ZXing).";
+                  run();
+                  return;
+                }
+              } catch (zxErr) {}
+            }
           }
         } catch (e) { /* keep polling */ }
-      }, 400);
+      }, 250);
     } catch (e) {
+      stopCamera();
       if (cameraBox) cameraBox.hidden = true;
-      $("scanNote").textContent = "Camera permission denied — paste or choose a street sample above.";
+      $("scanNote").textContent = "Camera permission denied — upload an image, paste, or choose a street sample above.";
+    }
+  });
+
+  // -------------------------------------------------------------
+  // QR Image File Upload & Decoder Engine
+  // -------------------------------------------------------------
+  function clearUploadedImage() {
+    var box = $("uploadPreviewBox");
+    if (box) box.hidden = true;
+    var fileInput = $("qrFileInput");
+    if (fileInput) fileInput.value = "";
+    var previewImg = $("uploadPreviewImg");
+    if (previewImg) {
+      if (previewImg.src && previewImg.src.startsWith("blob:")) {
+        URL.revokeObjectURL(previewImg.src);
+      }
+      previewImg.src = "";
+    }
+    var badge = $("uploadStatusBadge");
+    if (badge) {
+      badge.className = "upload-preview-status";
+      badge.textContent = "Ready";
+    }
+  }
+
+  function formatBytes(bytes) {
+    if (!bytes || bytes === 0) return "0 B";
+    var k = 1024;
+    var sizes = ["B", "KB", "MB"];
+    var i = Math.floor(Math.log(bytes) / Math.log(k));
+    return (bytes / Math.pow(k, i)).toFixed(1) + " " + sizes[i];
+  }
+
+  async function decodeQRFromImageSource(imgElement) {
+    // 1. Try native BarcodeDetector if available
+    if ("BarcodeDetector" in window) {
+      try {
+        var detector = new BarcodeDetector({ formats: ["qr_code"] });
+        var codes = await detector.detect(imgElement);
+        if (codes && codes.length > 0 && codes[0].rawValue) {
+          return { text: codes[0].rawValue, engine: "BarcodeDetector" };
+        }
+      } catch (e) {}
+    }
+
+    var origW = imgElement.naturalWidth || imgElement.width;
+    var origH = imgElement.naturalHeight || imgElement.height;
+    if (!origW || !origH) {
+      throw new Error("Invalid image dimensions.");
+    }
+
+    var jsQRFn = (typeof jsQR !== "undefined") ? jsQR : (window.jsQR || null);
+    var canvas = document.createElement("canvas");
+    var ctx = canvas.getContext("2d", { willReadFrequently: true });
+    if (!ctx) {
+      throw new Error("Canvas 2D context unavailable.");
+    }
+
+    function tryJsQR(targetW, targetH, options) {
+      if (!jsQRFn) return null;
+      var imgData = ctx.getImageData(0, 0, targetW, targetH);
+      if (options && options.enhanceContrast) {
+        var d = imgData.data;
+        var sum = 0, count = d.length / 4;
+        for (var i = 0; i < d.length; i += 4) {
+          sum += 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+        }
+        var threshold = sum / count;
+        for (var j = 0; j < d.length; j += 4) {
+          var lum = 0.299 * d[j] + 0.587 * d[j + 1] + 0.114 * d[j + 2];
+          var val = lum < threshold ? 0 : 255;
+          d[j] = val; d[j + 1] = val; d[j + 2] = val;
+        }
+      }
+      var res = jsQRFn(imgData.data, imgData.width, imgData.height, {
+        inversionAttempts: (options && options.inversionAttempts) || "attemptBoth"
+      });
+      return (res && res.data) ? res.data : null;
+    }
+
+    function tryZXing() {
+      if (window.ZXing && window.ZXing.QRCodeReader) {
+        try {
+          var reader = new window.ZXing.QRCodeReader();
+          var lum = new window.ZXing.HTMLCanvasElementLuminanceSource(canvas);
+          var bmp = new window.ZXing.BinaryBitmap(new window.ZXing.HybridBinarizer(lum));
+          var zx = reader.decode(bmp);
+          if (zx && zx.getText()) return zx.getText();
+        } catch (e1) {
+          try {
+            var bmp2 = new window.ZXing.BinaryBitmap(new window.ZXing.GlobalHistogramBinarizer(lum));
+            var zx2 = reader.decode(bmp2);
+            if (zx2 && zx2.getText()) return zx2.getText();
+          } catch (e2) {}
+        }
+      }
+      return null;
+    }
+
+    function scanAt(tw, th, options) {
+      canvas.width = tw;
+      canvas.height = th;
+      ctx.drawImage(imgElement, 0, 0, tw, th);
+      var text = tryJsQR(tw, th, options);
+      if (text) return { text: text, engine: "jsQR" };
+      text = tryZXing();
+      if (text) return { text: text, engine: "ZXing" };
+      return null;
+    }
+
+    var maxDim = Math.max(origW, origH);
+
+    // Pass 1: Native resolution (essential for dense codes like BharatQR)
+    if (maxDim <= 1800) {
+      var r = scanAt(origW, origH);
+      if (r) return r;
+    }
+
+    // Pass 2: Scaled resolution (~1000px max)
+    var scale1 = Math.min(1, 1000 / maxDim);
+    var w1 = Math.floor(origW * scale1);
+    var h1 = Math.floor(origH * scale1);
+    var r1 = scanAt(w1, h1);
+    if (r1) return r1;
+
+    // Pass 3: High resolution (~1600px max)
+    if (maxDim > 1000) {
+      var scale3 = Math.min(1, 1600 / maxDim);
+      var w3 = Math.floor(origW * scale3);
+      var h3 = Math.floor(origH * scale3);
+      var r3 = scanAt(w3, h3);
+      if (r3) return r3;
+    }
+
+    // Pass 4: Lower scale (~600px max for macro close-ups)
+    var scale4 = Math.min(1, 600 / maxDim);
+    var w4 = Math.floor(origW * scale4);
+    var h4 = Math.floor(origH * scale4);
+    var r4 = scanAt(w4, h4);
+    if (r4) return r4;
+
+    // Pass 5: Contrast enhanced pass
+    canvas.width = w1;
+    canvas.height = h1;
+    ctx.drawImage(imgElement, 0, 0, w1, h1);
+    var textContrast = tryJsQR(w1, h1, { enhanceContrast: true });
+    if (textContrast) return { text: textContrast, engine: "jsQR (High Contrast)" };
+
+    // Pass 6: Center crop (zooming in 1.4x into center where user aims)
+    if (origW > 300 && origH > 300) {
+      var cropW = Math.floor(origW * 0.75);
+      var cropH = Math.floor(origH * 0.75);
+      var cropX = Math.floor((origW - cropW) / 2);
+      var cropY = Math.floor((origH - cropH) / 2);
+      canvas.width = cropW;
+      canvas.height = cropH;
+      ctx.drawImage(imgElement, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+      var cropText = tryJsQR(cropW, cropH);
+      if (cropText) return { text: cropText, engine: "jsQR (Center Zoom)" };
+      var cropZx = tryZXing();
+      if (cropZx) return { text: cropZx, engine: "ZXing (Center Zoom)" };
+    }
+
+    return null;
+  }
+
+  async function handleImageFile(file, overrideName) {
+    if (!file || (file.type && !file.type.match(/^image\//i))) {
+      $("scanNote").textContent = "Please select a valid image file (PNG, JPG, WEBP, etc.).";
+      return;
+    }
+
+    playPencilTap();
+
+    if (activeStream) {
+      stopCamera();
+      if ($("video")) $("video").hidden = true;
+      if ($("cameraBox")) $("cameraBox").hidden = true;
+    }
+
+    var fileName = overrideName || file.name || "uploaded-qr.png";
+    var fileSize = file.size ? formatBytes(file.size) : "";
+
+    var box = $("uploadPreviewBox");
+    var imgEl = $("uploadPreviewImg");
+    var filenameEl = $("uploadFilename");
+    var statusBadge = $("uploadStatusBadge");
+    var metaEl = $("uploadMeta");
+
+    if (box) box.hidden = false;
+    if (filenameEl) filenameEl.textContent = fileName;
+    if (statusBadge) {
+      statusBadge.className = "upload-preview-status";
+      statusBadge.textContent = "Scanning…";
+    }
+    if (metaEl) metaEl.textContent = fileSize ? fileSize : "Processing…";
+    $("scanNote").textContent = "Decoding QR code from " + fileName + "…";
+
+    // Use FileReader to produce Data URL — guarantees clean canvas access on file:/// protocol
+    var reader = new FileReader();
+    reader.onerror = function () {
+      if (statusBadge) {
+        statusBadge.className = "upload-preview-status danger";
+        statusBadge.textContent = "Read Error";
+      }
+      $("scanNote").textContent = "Could not read image file.";
+    };
+    reader.onload = function (evt) {
+      var dataUrl = evt.target.result;
+      var img = new Image();
+      img.onload = async function () {
+        if (imgEl) imgEl.src = dataUrl;
+        var dims = img.naturalWidth + " × " + img.naturalHeight + " px";
+        if (metaEl) metaEl.textContent = fileSize ? (dims + " · " + fileSize) : dims;
+
+        try {
+          var result = await decodeQRFromImageSource(img);
+          if (result && result.text) {
+            if (statusBadge) {
+              statusBadge.className = "upload-preview-status safe";
+              statusBadge.textContent = "✓ Decoded (" + result.engine + ")";
+            }
+            $("payload").value = result.text;
+            $("scanNote").textContent = "✓ QR decoded from " + fileName + ". Running security audit…";
+            playPencilTap();
+            run();
+          } else {
+            if (statusBadge) {
+              statusBadge.className = "upload-preview-status warning";
+              statusBadge.textContent = "⚠️ No QR Code Found";
+            }
+            $("scanNote").textContent = "No readable QR code found in " + fileName + ". Please check lighting, crop closely, or try another image.";
+          }
+        } catch (err) {
+          if (statusBadge) {
+            statusBadge.className = "upload-preview-status danger";
+            statusBadge.textContent = "Scan Error";
+          }
+          $("scanNote").textContent = "Error scanning image: " + (err.message || err);
+        }
+      };
+      img.onerror = function () {
+        if (statusBadge) {
+          statusBadge.className = "upload-preview-status danger";
+          statusBadge.textContent = "Invalid Image";
+        }
+        $("scanNote").textContent = "Could not load image file.";
+      };
+      img.src = dataUrl;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // Trigger file input
+  var qrFileInput = $("qrFileInput");
+  var uploadBtn = $("uploadBtn");
+  var uploadMicroBtn = $("uploadMicroBtn");
+
+  if (uploadBtn) {
+    uploadBtn.addEventListener("click", function () {
+      playPencilTap();
+      if (qrFileInput) qrFileInput.click();
+    });
+  }
+
+  if (uploadMicroBtn) {
+    uploadMicroBtn.addEventListener("click", function () {
+      playPencilTap();
+      if (qrFileInput) qrFileInput.click();
+    });
+  }
+
+  if (qrFileInput) {
+    qrFileInput.addEventListener("change", function (e) {
+      if (e.target.files && e.target.files.length > 0) {
+        handleImageFile(e.target.files[0]);
+      }
+    });
+  }
+
+  var removeUploadBtn = $("removeUploadBtn");
+  if (removeUploadBtn) {
+    removeUploadBtn.addEventListener("click", function () {
+      playPencilTap();
+      clearUploadedImage();
+      $("scanNote").textContent = "Uploaded image removed.";
+    });
+  }
+
+  // Drag and drop support on dropzone
+  var dropzoneWrap = $("dropzoneWrap");
+  if (dropzoneWrap) {
+    ["dragenter", "dragover"].forEach(function (evt) {
+      dropzoneWrap.addEventListener(evt, function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzoneWrap.classList.add("drag-over");
+      });
+    });
+
+    ["dragleave", "dragend"].forEach(function (evt) {
+      dropzoneWrap.addEventListener(evt, function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzoneWrap.classList.remove("drag-over");
+      });
+    });
+
+    dropzoneWrap.addEventListener("drop", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      dropzoneWrap.classList.remove("drag-over");
+      var dt = e.dataTransfer;
+      if (dt && dt.files && dt.files.length > 0) {
+        var file = dt.files[0];
+        if (file.type && file.type.indexOf("image") !== -1) {
+          handleImageFile(file);
+        } else {
+          $("scanNote").textContent = "Dropped file is not an image. Please drop a QR code image.";
+        }
+      }
+    });
+  }
+
+  // Global paste handler to capture pasted screenshot images
+  document.addEventListener("paste", function (e) {
+    var items = (e.clipboardData || window.clipboardData) && (e.clipboardData || window.clipboardData).items;
+    if (!items) return;
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].type && items[i].type.indexOf("image") !== -1) {
+        var blob = items[i].getAsFile();
+        if (blob) {
+          e.preventDefault();
+          handleImageFile(blob, "Pasted Screenshot (" + new Date().toLocaleTimeString() + ").png");
+          return;
+        }
+      }
     }
   });
 

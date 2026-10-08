@@ -74,21 +74,25 @@ Kolkata — and India — runs on QR codes. Tea stalls, taxis, parking, donation
 **No build step, no dependencies, no installation needed.**
 
 #### Option A: Direct Open
-Double-click [`index.html`](file:///d:/My%20Projects/All%20Hackathons/OpenSecBench/index.html) in any modern web browser.
+Double-click `index.html` in any modern web browser.
 
 #### Option B: Local HTTP Server
 ```bash
 # Python 3
 python -m http.server 8000
 
+# Or Node.js
+npx serve .
+
 # Visit in browser:
 http://localhost:8000
 ```
 
-Try the three built-in demo buttons (requires zero camera or network access):
-1. **Safe shop UPI** (Rabindra Sarobar chai stall) → `SAFE 0/100`
-2. **Sticker-swap UPI** (Same shop, fraudulent payee) → `DANGEROUS 75/100`
-3. **Phishing link QR** (Fake KYC update) → `DANGEROUS 100/100`
+Ways to audit a QR:
+1. **Upload QR Image:** Click **Upload QR image** or **📷 Upload Image**, drop any image or screenshot onto the input box, or paste directly from clipboard (`Ctrl+V`).
+2. **Scan with Camera:** Tap **Scan with camera** for live real-time detection (BarcodeDetector / jsQR fallback).
+3. **Street Samples:** Click any of the three quick scenarios (`Safe shop UPI`, `Sticker-swap UPI`, `Phishing link QR`).
+4. **Paste Text:** Paste raw `upi://` or `http://` URLs into the payload textarea.
 
 **Live Gemma Mode (Optional):**
 Copy `config.example.js` to `config.js` and add your Google AI Studio API key and Gemma model name. Without it, the built-in offline fallback runs seamlessly.

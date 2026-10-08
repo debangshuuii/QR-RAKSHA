@@ -17,7 +17,14 @@
 
   function fallbackExplain(result, place) {
     var lines = [];
-    if (result.verdict === "SAFE") {
+    if (result.kind === "upi_merchant" && result.verdict === "SAFE") {
+      var details = [];
+      if (result.displayName) details.push("official business name '" + result.displayName + "'");
+      if (result.merchantCategory) details.push("merchant category '" + result.merchantCategory + "'");
+      if (result.city) details.push("registered in " + result.city + (result.pin ? " PIN " + result.pin : ""));
+      lines.push("Verified Official BharatQR Merchant Account: This code belongs to " + (result.displayName || "an authenticated business merchant") + " (" + details.join(", ") + ").");
+      lines.push("The settlement VPA is legitimately issued by NPCI / banking standards, with no sticker-swap discrepancy detected.");
+    } else if (result.verdict === "SAFE") {
       lines.push("This QR looks safe under our checks: the payee name matches, the payment handle is a known provider, and nothing is pre-filled or hidden.");
     } else if (result.flags.length) {
       lines.push("Here is why this QR scored " + result.score + "/100 (" + result.verdict + "):");

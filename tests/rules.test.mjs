@@ -43,3 +43,17 @@ test("shortened https link is at least CAUTION", () => {
   const r = analyse("https://bit.ly/3AbCdEf", "", "Kolkata");
   assert.equal(r.verdict, "CAUTION");
 });
+
+test("EMVCo BharatQR merchant code (Techno Main Salt Lake) is SAFE and recognizes registered business", () => {
+  const raw = "000201010211021646049010737005110415512260007370050061661000200737005220826UTIB000031992001003930764226460010A0000005240128MAB.037135003190033@AXISBANK27490010A000000524013103713500319003361000200737005225204829953033565802IN5920TECHNO MAIN SALTLAKE6007KOLKATA610670009162120708073700526304A9AD";
+  const r = analyse(raw, "Techno Main", "Salt Lake, Kolkata");
+  assert.equal(r.kind, "upi_merchant");
+  assert.equal(r.displayName, "TECHNO MAIN SALTLAKE");
+  assert.equal(r.verdict, "SAFE");
+  assert.equal(r.score, 0);
+  assert.equal(r.maskedPayee, "MA***@AXISBANK");
+  assert.equal(r.isBusiness, true);
+  assert.equal(r.merchantCategory, "Educational Services");
+  assert.equal(r.city, "KOLKATA");
+  assert.equal(r.pin, "700091");
+});

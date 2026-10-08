@@ -9,8 +9,57 @@
   var SHORTENERS = ["bit.ly","tinyurl.com","t.co","goo.gl","rb.gy","cutt.ly","shorturl.at","is.gd","buff.ly","ow.ly","s.id"];
   var BRANDS = ["paytm","googlepay","gpay","phonepe","bhim","sbi","hdfc","icici","axis","upi","npci"];
   var OFFICIAL = ["paytm.com","phonepe.com","sbi.co.in","hdfcbank.com","icicibank.com","axisbank.com","npci.org.in","bhimupi.org.in"];
-  var KNOWN_PSP = ["okhdfcbank","okicici","okaxis","oksbi","paytm","ybl","ibl","axl","sbi","upi","apl","okbizaxis","rapl","mahb","kotak","barodampay","cnrb","idfcfirst","federal","indus","yesbank","payzapp","freecharge","amazonpay"];
+  var KNOWN_PSP = ["okhdfcbank","okicici","okaxis","oksbi","paytm","ybl","ibl","axl","sbi","upi","apl","okbizaxis","rapl","mahb","kotak","barodampay","cnrb","idfcfirst","federal","indus","yesbank","payzapp","freecharge","amazonpay","axisbank","pingpay","pnb","allbank","centralbank","unionbank","uco"];
   var SUSPICIOUS_WORDS = ["verify","kyc","login","secure","update","refund","claim","prize","winner","otp","password","account-blocked","re-activate","reactivate"];
+
+  var MCC_MAP = {
+    "8299": "Educational Services",
+    "8211": "Schools (Elementary & Secondary)",
+    "8220": "Colleges & Universities",
+    "5411": "Grocery Stores & Supermarkets",
+    "5499": "Misc Food Stores",
+    "5812": "Restaurants & Eating Places",
+    "5814": "Fast Food & Tea Stalls",
+    "5912": "Drug Stores & Pharmacies",
+    "5541": "Service Stations & Fuel",
+    "4121": "Taxicabs & Rides",
+    "5311": "Department Stores"
+  };
+
+  function parseEMVCo(text) {
+    if (!text || text.slice(0, 6) !== "000201") return null;
+    var tlv = {};
+    var i = 0;
+    while (i < text.length) {
+      var tag = text.slice(i, i + 2);
+      var len = parseInt(text.slice(i + 2, i + 4), 10);
+      if (isNaN(len) || i + 4 + len > text.length) break;
+      var val = text.slice(i + 4, i + 4 + len);
+      tlv[tag] = val;
+      i += 4 + len;
+    }
+    return tlv;
+  }
+
+  function extractVPAFromEMVCo(tlv) {
+    var candidateTags = ["26", "27", "28", "29", "30", "31"];
+    for (var k = 0; k < candidateTags.length; k++) {
+      var str = tlv[candidateTags[k]];
+      if (!str || str.indexOf("@") === -1) continue;
+      var at = str.indexOf("@");
+      var after = str.slice(at + 1).split(/[^a-zA-Z0-9]/)[0];
+      var before = str.slice(0, at);
+      var match = before.match(/([a-zA-Z0-9][a-zA-Z0-9._-]*)$/);
+      if (match) {
+        var candidate = match[1];
+        if (candidate.indexOf("A00000052401") !== -1) {
+          candidate = candidate.slice(candidate.indexOf("A00000052401") + 12).replace(/^\d{1,2}/, "");
+        }
+        return candidate + "@" + after;
+      }
+    }
+    return "";
+  }
 
   function norm(s) { return (s || "").toLowerCase().replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim(); }
   function tokens(s) { return norm(s).split(" ").filter(function (t) { return t.length > 2; }); }
@@ -39,6 +88,33 @@
 
   function parsePayload(raw) {
     var text = (raw || "").trim();
+    if (text.slice(0, 6) === "000201") {
+      var tlv = parseEMVCo(text);
+      if (tlv) {
+        var merchantName = (tlv["59"] || "").trim();
+        var vpa = extractVPAFromEMVCo(tlv);
+        var city = (tlv["60"] || "").trim();
+        var pin = (tlv["61"] || "").trim();
+        var mcc = (tlv["52"] || "").trim();
+        var am = (tlv["54"] || "").trim();
+        var cu = (tlv["53"] || "356").trim();
+        var categoryDesc = MCC_MAP[mcc] || (mcc ? ("Merchant MCC " + mcc) : "Registered Business Merchant");
+        return {
+          kind: "upi_merchant",
+          raw: text,
+          pa: vpa,
+          pn: merchantName || "Registered Business Merchant",
+          merchantName: merchantName,
+          city: city,
+          pin: pin,
+          mcc: mcc,
+          category: categoryDesc,
+          am: am,
+          cu: cu,
+          isBusiness: true
+        };
+      }
+    }
     if (/^upi:/i.test(text)) {
       var q = text.split("?")[1] || "";
       var params = {};
@@ -66,6 +142,25 @@
     function flag(code, severity, points, detail) { flags.push({ code: code, severity: severity, points: points, detail: detail }); }
 
     var displayName = "", masked = "";
+
+    if (p.kind === "upi_merchant") {
+      displayName = p.pn;
+      masked = maskPayee(p.pa);
+      if (expectedName && p.pn) {
+        var exp = tokens(expectedName), got = tokens(p.pn);
+        var overlap = exp.some(function (t) { return got.indexOf(t) !== -1; });
+        if (!overlap) {
+          flag("NAME_MISMATCH", "high", 45, "Name on the sign/shop is '" + expectedName + "' but the QR pays registered business '" + p.pn + "'. Classic sticker-swap sign.");
+        }
+      }
+      if (p.am) {
+        flag("PREFILLED_AMOUNT", "low", 10, "Amount is pre-filled by the QR (₹" + p.am + "). Check it before confirming.");
+      }
+      var handle = (p.pa.split("@")[1] || "").toLowerCase();
+      if (handle && KNOWN_PSP.indexOf(handle) === -1) {
+        flag("UPI_UNKNOWN_HANDLE", "low", 10, "Payee bank handle '@" + handle + "' is not in the primary list.");
+      }
+    }
 
     if (p.kind === "upi") {
       displayName = p.pn || "(no payee name in QR)";
@@ -125,14 +220,18 @@
       kind: p.kind,
       displayName: displayName,
       maskedPayee: masked,
+      merchantCategory: p.category || "",
+      city: p.city || "",
+      pin: p.pin || "",
+      isBusiness: !!p.isBusiness,
       flags: flags,
       score: score,
       verdict: verdict,
       scrubbed: {
         qr_hash: fnv1a(p.raw),
         display_name: displayName,
-        category: p.kind,
-        coarse_area: coarseArea(area),
+        category: (p.kind === "upi" || p.kind === "upi_merchant") ? "upi" : p.kind,
+        coarse_area: coarseArea(area || (p.city ? p.city + ", Kolkata" : "")),
         verdict: verdict,
         score: score,
         payee_masked: masked || null

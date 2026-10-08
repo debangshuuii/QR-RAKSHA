@@ -24,6 +24,14 @@ Kolkata — and India — runs on QR codes. Tea stalls, taxis, parking, donation
 2. [Section 2: Team Information](#section-2-team-information)
 3. [Section 3: Open-Source License & Disclosures](#section-3-open-source-license--disclosures)
 
+### 📚 Judging & Hackathon Documentation
+* 🎯 **[Live Judging Playbook](JUDGING_PLAYBOOK.md):** 3-minute pitch, live demo steps, and track defense answers.
+* 📝 **[Official Submission Form](SUBMISSION.md):** Ready-to-submit form with all 10 required fields.
+* 🧠 **[AI Tools & Skills Guide (SKILLS.md)](SKILLS.md):** Open-weight AI documentation, Agent Skill compliance, and original model harness.
+* 🛡️ **[Track Verification Dossier](TRACKS_VERIFICATION.md):** Evidence and proofs for all 4 challenge tracks.
+* 📊 **[Presentation Slides Deck](SLIDES.md):** Copy-paste slides for Hacktoberfest opening slide deck.
+* ❄️ **[Snowflake CoCo Guide](snowflake/COCO.md):** CoCo prompt transcripts, Cybersyn POI dataset, and DDL views.
+
 ---
 
 # Section 1: About the Project

@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#181c24"/>
+      <stop offset="100%" stop-color="#0d0f14"/>
+    </linearGradient>
+  </defs>
+  <!-- Background rounded squircle -->
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="url(#bgGrad)" stroke="#2e3644" stroke-width="2"/>
+  
+  <!-- Outer Shield Silhouette -->
+  <path d="M32 10 L48 16 V27 C48 38 41 47 32 51 C23 47 16 38 16 27 V16 Z" fill="rgba(16, 185, 129, 0.08)" stroke="url(#shieldGrad)" stroke-width="2.5" stroke-linejoin="round"/>
+  
+  <!-- QR Finder Patterns inside Shield -->
+  <!-- Top Left Finder Pattern -->
+  <rect x="22" y="20" width="7" height="7" rx="1.5" fill="#10b981"/>
+  <rect x="24" y="22" width="3" height="3" fill="#0d0f14"/>
+  
+  <!-- Top Right Finder Pattern -->
+  <rect x="35" y="20" width="7" height="7" rx="1.5" fill="#10b981"/>
+  <rect x="37" y="22" width="3" height="3" fill="#0d0f14"/>
+  
+  <!-- Bottom Left Finder Pattern -->
+  <rect x="22" y="31" width="7" height="7" rx="1.5" fill="#10b981"/>
+  <rect x="24" y="33" width="3" height="3" fill="#0d0f14"/>
+  
+  <!-- Center Verified Security Checkmark -->
+  <path d="M33 34 L37 38 L44 30" fill="none" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -161,7 +161,7 @@ Covers 8 core automated security & AI assertions:
 # Section 3: Open-Source License & Disclosures
 
 ### Open-Source License
-This project is licensed under the terms of the **MIT License**. A complete copy of the license is included in [`LICENSE`](file:///d:/My%20Projects/All%20Hackathons/OpenSecBench/LICENSE).
+This project is licensed under the terms of the **MIT License**. A complete copy of the license is included in [`LICENSE`](LICENSE).
 
 ```text
 MIT License

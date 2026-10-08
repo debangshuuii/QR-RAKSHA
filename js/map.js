@@ -111,10 +111,17 @@
         scrollWheelZoom: false
       });
 
-      // Free public OpenStreetMap tiles (No API key required)
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors',
-        subdomains: ["a", "b", "c"],
+      // Enterprise Esri World Dark Gray Canvas (Zero API key, never blocks browser/file origins)
+      L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}", {
+        attribution: 'Tiles &copy; Esri, DeLorme, NAVTEQ',
+        maxNativeZoom: 16,
+        maxZoom: 19
+      }).addTo(mapInstance);
+
+      // Clean street labels and landmarks overlay
+      L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}", {
+        attribution: '',
+        maxNativeZoom: 16,
         maxZoom: 19
       }).addTo(mapInstance);
 

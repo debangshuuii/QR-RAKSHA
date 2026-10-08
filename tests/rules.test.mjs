@@ -57,3 +57,10 @@ test("EMVCo BharatQR merchant code (Techno Main Salt Lake) is SAFE and recognize
   assert.equal(r.city, "KOLKATA");
   assert.equal(r.pin, "700091");
 });
+
+test("open-weight AI model harness executes and achieves 100% safety & vernacular pass rate", async () => {
+  const { runHarnessEvaluation } = await import("../harness/eval_harness.mjs");
+  const report = runHarnessEvaluation();
+  assert.equal(report.passed_assertions, report.total_assertions);
+  assert.equal(report.pass_rate_pct, 100);
+});

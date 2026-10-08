@@ -1,0 +1,68 @@
+{
+  "harness": "TrailQR Open-Weight AI Evaluation Harness v1.0",
+  "model_under_test": "Google Gemma 4 (Multilingual Vernacular Explainer)",
+  "standard": "Agent Skill Open Standard + Heuristic Non-Regression SLA",
+  "timestamp": "2026-10-08T07:49:22.489Z",
+  "total_fixtures": 4,
+  "total_assertions": 16,
+  "passed_assertions": 16,
+  "pass_rate_pct": 100,
+  "results": [
+    {
+      "fixture_id": "H-SAFE-01",
+      "name": "Authentic Tea Stall UPI",
+      "verdict": "SAFE",
+      "verdict_expected": "SAFE",
+      "passed": true,
+      "latency_ms": 0.524,
+      "checks": {
+        "verdict_alignment": true,
+        "vernacular_tokens": true,
+        "pii_protection": true,
+        "latency_sla": true
+      }
+    },
+    {
+      "fixture_id": "H-SWAP-02",
+      "name": "Malicious UPI Sticker-Swap",
+      "verdict": "DANGEROUS",
+      "verdict_expected": "DANGEROUS",
+      "passed": true,
+      "latency_ms": 0.116,
+      "checks": {
+        "verdict_alignment": true,
+        "vernacular_tokens": true,
+        "pii_protection": true,
+        "latency_sla": true
+      }
+    },
+    {
+      "fixture_id": "H-PHISH-03",
+      "name": "Paytm Credential Harvesting Phishing Link",
+      "verdict": "DANGEROUS",
+      "verdict_expected": "DANGEROUS",
+      "passed": true,
+      "latency_ms": 0.185,
+      "checks": {
+        "verdict_alignment": true,
+        "vernacular_tokens": true,
+        "pii_protection": true,
+        "latency_sla": true
+      }
+    },
+    {
+      "fixture_id": "H-BHARAT-04",
+      "name": "Official NPCI EMVCo BharatQR Campus Merchant",
+      "verdict": "SAFE",
+      "verdict_expected": "SAFE",
+      "passed": true,
+      "latency_ms": 0.213,
+      "checks": {
+        "verdict_alignment": true,
+        "vernacular_tokens": true,
+        "pii_protection": true,
+        "latency_sla": true
+      }
+    }
+  ]
+}

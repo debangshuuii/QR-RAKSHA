@@ -1,7 +1,7 @@
 # TrailQR Raksha — Check a QR Before You Pay
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Node.js Tests](https://img.shields.io/badge/tests-7%20passed-brightgreen.svg)](#tests)
+[![Node.js Tests](https://img.shields.io/badge/tests-8%20passed-brightgreen.svg)](#tests)
 [![Track](https://img.shields.io/badge/OWASP-AI%20in%20Cybersecurity-red.svg)](#tracks-entered)
 [![Track](https://img.shields.io/badge/Google-Gemma%204-blue.svg)](#tracks-entered)
 [![Track](https://img.shields.io/badge/Snowflake-CoCo%20%26%20Marketplace-lightblue.svg)](#tracks-entered)
@@ -112,7 +112,7 @@ Run the built-in Node test suite:
 node --test tests/rules.test.mjs
 ```
 
-Covers 7 core automated security assertions:
+Covers 8 core automated security & AI assertions:
 - Safe merchant UPI returns `SAFE`
 - Sticker swap returns `DANGEROUS` (name mismatch + random payee + pre-filled amount)
 - Phishing link returns `DANGEROUS` (insecure HTTP + brand spoofing + pressure keywords)
@@ -120,6 +120,7 @@ Covers 7 core automated security assertions:
 - Payee masking properly conceals sensitive handles
 - Shortened URLs trigger risk warnings
 - EMVCo BharatQR merchant code (Techno Main Salt Lake) returns `SAFE` and verifies registered business entity
+- Open-weight AI model evaluation harness (`harness/eval_harness.mjs`) validates 16/16 safety alignment & vernacular token checks with 100% pass rate
 
 ---
 

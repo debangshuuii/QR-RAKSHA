@@ -31,7 +31,9 @@ Our submission satisfies all three required elements:
 
 ## Submission Readiness Checklist
 - [x] Repo is configured for `https://github.com/debangshuuii/QR-RAKSHA` and README renders 3 distinct sections.
-- [x] `node --test tests/rules.test.mjs` passes (7/7 tests passing).
+- [x] `node --test tests/rules.test.mjs` passes (8/8 tests passing, including AI model harness).
+- [x] Agent Skill complies with Agent Skill Open Standard (`skills/qr-audit/SKILL.md`).
+- [x] Model harness benchmark executes with 100% pass rate (`harness/eval_harness.mjs`).
 - [x] Snowflake schema ready (`snowflake/schema.sql`) and CoCo exploration workflow ready (`snowflake/COCO.md`).
 - [x] Data pipeline scripts executable (`snowflake/pipeline.js` and `snowflake/pipeline.py`).
 - [x] Team name, members, college, year, branch, and repo URL filled in.

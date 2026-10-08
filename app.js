@@ -75,9 +75,154 @@
       soundToggle.classList.toggle("active", soundEnabled);
       var soundIcon = $("soundIcon");
       var soundLabel = $("soundLabel");
+      var lang = (window.TrailQRI18n && window.TrailQRI18n.getLang()) || "en";
       if (soundIcon) soundIcon.textContent = soundEnabled ? "🔊" : "🔇";
-      if (soundLabel) soundLabel.textContent = soundEnabled ? "Audio Active" : "Audio Muted";
+      if (soundLabel) {
+        soundLabel.textContent = soundEnabled 
+          ? (window.TrailQRI18n ? window.TrailQRI18n.t("audioActive", lang) : "Audio Active")
+          : (window.TrailQRI18n ? window.TrailQRI18n.t("audioMuted", lang) : "Audio Muted");
+      }
       if (soundEnabled) playPencilTap();
+    });
+  }
+
+  // -------------------------------------------------------------
+  // Left Sidebar View Switching Engine
+  // -------------------------------------------------------------
+  function switchView(viewId) {
+    var navItems = document.querySelectorAll(".sidebar-nav .nav-item");
+    var targetNav = null;
+    navItems.forEach(function (item) {
+      var match = item.getAttribute("data-view") === viewId;
+      item.classList.toggle("active", match);
+      if (match) targetNav = item;
+    });
+
+    var views = document.querySelectorAll(".main-views-container .app-view");
+    views.forEach(function (v) {
+      v.classList.toggle("active", v.id === viewId);
+    });
+
+    if (targetNav) {
+      var labelEl = targetNav.querySelector(".nav-label");
+      if (labelEl && $("breadcrumbTitle")) {
+        $("breadcrumbTitle").textContent = labelEl.textContent;
+      }
+    }
+
+    // View-specific initializations
+    if (viewId === "viewMap") {
+      if (window.TrailQRMap) {
+        window.TrailQRMap.init();
+        setTimeout(function () {
+          window.TrailQRMap.init();
+          window.TrailQRMap.renderMarkers();
+        }, 120);
+      }
+    } else if (viewId === "viewRegistry") {
+      renderRegistry();
+    } else if (viewId === "viewSnowflake") {
+      renderSnowflakeIntelligence(window.TrailQRRegistry.load());
+    }
+
+    // Dismiss mobile drawer
+    document.body.classList.remove("sidebar-open");
+  }
+
+  // Wire sidebar navigation items
+  var navItems = document.querySelectorAll(".sidebar-nav .nav-item");
+  navItems.forEach(function (item) {
+    item.addEventListener("click", function () {
+      playPencilTap();
+      var viewId = item.getAttribute("data-view");
+      if (viewId) switchView(viewId);
+    });
+  });
+
+  // Mobile sidebar toggle & close
+  var sidebarToggle = $("sidebarToggle");
+  if (sidebarToggle) {
+    sidebarToggle.addEventListener("click", function () {
+      playPencilTap();
+      document.body.classList.toggle("sidebar-open");
+    });
+  }
+
+  var sidebarCloseBtn = $("sidebarCloseBtn");
+  if (sidebarCloseBtn) {
+    sidebarCloseBtn.addEventListener("click", function () {
+      playPencilTap();
+      document.body.classList.remove("sidebar-open");
+    });
+  }
+
+  // -------------------------------------------------------------
+  // Vernacular Language Switcher Engine (EN · বাংলা · हिन्दी)
+  // -------------------------------------------------------------
+  var langBtns = document.querySelectorAll(".lang-btn");
+  langBtns.forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      playPencilTap();
+      var lang = btn.getAttribute("data-lang");
+      if (window.TrailQRI18n) {
+        window.TrailQRI18n.setLang(lang);
+      }
+
+      // Update active breadcrumb title to match translated active nav label
+      var activeNav = document.querySelector(".sidebar-nav .nav-item.active");
+      if (activeNav) {
+        var labelEl = activeNav.querySelector(".nav-label");
+        if (labelEl && $("breadcrumbTitle")) {
+          $("breadcrumbTitle").textContent = labelEl.textContent;
+        }
+      }
+
+      // If active scan result is present, re-generate explanation in selected language
+      if (current && window.TrailQRGemma) {
+        var area = $("area") ? $("area").value.trim() : "";
+        window.TrailQRGemma.explain(current, currentPlace || area).then(function (out) {
+          if ($("explanation")) $("explanation").textContent = out.text;
+          if ($("gemmaMode")) $("gemmaMode").textContent = (out.mode === "gemma-live" ? "Gemma 4 · Live via Gemini API" : "Gemma 4 · Scripted Local Fallback");
+        });
+        var quest = window.TrailQRGemma.quest(current, currentPlace || area);
+        if ($("questBox")) $("questBox").hidden = !quest;
+        if ($("quest")) $("quest").textContent = quest || "";
+      }
+
+      // Refresh map popups
+      if (window.TrailQRMap) {
+        window.TrailQRMap.renderMarkers();
+      }
+    });
+  });
+
+  // -------------------------------------------------------------
+  // Threat Map Filters & Search Input
+  // -------------------------------------------------------------
+  var mapFilterBtns = document.querySelectorAll("[data-map-filter]");
+  mapFilterBtns.forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      playPencilTap();
+      mapFilterBtns.forEach(function (b) { b.classList.remove("active"); });
+      btn.classList.add("active");
+      var f = btn.getAttribute("data-map-filter");
+      if (window.TrailQRMap) {
+        window.TrailQRMap.setFilter(f);
+      }
+    });
+  });
+
+  var mapSearchInput = $("mapSearchInput");
+  if (mapSearchInput) {
+    mapSearchInput.addEventListener("input", function (e) {
+      if (window.TrailQRMap) {
+        window.TrailQRMap.panToLocality(e.target.value);
+      }
+    });
+    mapSearchInput.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" && window.TrailQRMap) {
+        window.TrailQRMap.panToLocality(e.target.value);
+      }
     });
   }
 
@@ -171,54 +316,69 @@
     if ($("statTotalAudits")) $("statTotalAudits").textContent = totalAudits;
     if ($("statThreats")) $("statThreats").textContent = threats;
     if ($("statSafe")) $("statSafe").textContent = safe;
+    if ($("sidebarAuditCount")) $("sidebarAuditCount").textContent = totalAudits;
+
+    if (window.TrailQRMap && window.TrailQRMap.getAllPoints) {
+      var allPts = window.TrailQRMap.getAllPoints();
+      var dangerPts = allPts.filter(function (p) { return p.status === "DANGEROUS"; }).length;
+      if ($("sidebarThreatCount")) $("sidebarThreatCount").textContent = dangerPts + " Flags";
+    }
   }
 
+  // -------------------------------------------------------------
+  // Audit Registry Rendering (Zero Fake Data)
+  // -------------------------------------------------------------
   function renderRegistry() {
     var rows = window.TrailQRRegistry.load();
-    if ($("scansCountBadge")) $("scansCountBadge").textContent = rows.length;
-    $("registryEmpty").hidden = rows.length > 0;
+    if ($("registryEmpty")) $("registryEmpty").hidden = rows.length > 0;
     var table = $("registryTable");
-    table.hidden = rows.length === 0;
-    var tbody = table.querySelector("tbody");
-    tbody.innerHTML = "";
+    if (table) {
+      table.hidden = rows.length === 0;
+      var tbody = table.querySelector("tbody");
+      if (tbody) {
+        tbody.innerHTML = "";
+        rows.forEach(function (r) {
+          var tr = document.createElement("tr");
 
-    rows.forEach(function (r) {
-      var tr = document.createElement("tr");
+          var tdHash = document.createElement("td");
+          tdHash.innerHTML = '<span class="hash-cell">#' + (r.qr_hash ? r.qr_hash.slice(0, 8) : "") + '</span>';
+          tr.appendChild(tdHash);
 
-      var tdHash = document.createElement("td");
-      tdHash.innerHTML = '<span class="hash-cell">#' + (r.qr_hash ? r.qr_hash.slice(0, 8) : "") + '</span>';
-      tr.appendChild(tdHash);
+          var tdName = document.createElement("td");
+          tdName.textContent = r.display_name || "—";
+          tr.appendChild(tdName);
 
-      var tdName = document.createElement("td");
-      tdName.textContent = r.display_name || "—";
-      tr.appendChild(tdName);
+          var tdArea = document.createElement("td");
+          tdArea.textContent = r.coarse_area || "—";
+          tr.appendChild(tdArea);
 
-      var tdArea = document.createElement("td");
-      tdArea.textContent = r.coarse_area || "—";
-      tr.appendChild(tdArea);
+          var tdVerdict = document.createElement("td");
+          var vClass = (r.verdict || "").toLowerCase();
+          tdVerdict.innerHTML = '<span class="verdict-pill ' + vClass + '">' + r.verdict + '</span>';
+          tr.appendChild(tdVerdict);
 
-      var tdVerdict = document.createElement("td");
-      var vClass = (r.verdict || "").toLowerCase();
-      tdVerdict.innerHTML = '<span class="verdict-pill ' + vClass + '">' + r.verdict + '</span>';
-      tr.appendChild(tdVerdict);
+          var tdScore = document.createElement("td");
+          tdScore.textContent = r.score + "/100";
+          tr.appendChild(tdScore);
 
-      var tdScore = document.createElement("td");
-      tdScore.textContent = r.score + "/100";
-      tr.appendChild(tdScore);
+          var tdRep = document.createElement("td");
+          tdRep.innerHTML = r.reported 
+            ? '<span style="color:var(--signal-danger);font-weight:700;">⚠️ Reported</span>' 
+            : '<span style="color:var(--chalk-dim);">Clean</span>';
+          tr.appendChild(tdRep);
 
-      var tdRep = document.createElement("td");
-      tdRep.innerHTML = r.reported 
-        ? '<span style="color:var(--signal-danger);font-weight:700;">⚠️ Reported</span>' 
-        : '<span style="color:var(--chalk-dim);">Clean</span>';
-      tr.appendChild(tdRep);
-
-      tbody.appendChild(tr);
-    });
+          tbody.appendChild(tr);
+        });
+      }
+    }
 
     updateStats(rows);
     renderSnowflakeIntelligence(rows);
   }
 
+  // -------------------------------------------------------------
+  // Snowflake Pipeline Intelligence (Zero Dummy Data Mode)
+  // -------------------------------------------------------------
   function renderSnowflakeIntelligence(rows) {
     if (!window.TrailQRRegistry || !window.TrailQRRegistry.computeViews) return;
     var intel = window.TrailQRRegistry.computeViews(rows);
@@ -230,7 +390,7 @@
       if (hsBody) {
         hsBody.innerHTML = "";
         if (!intel.hotspots.length) {
-          hsBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:18px;">No street scan telemetry loaded yet. Click "Load Demo Street Telemetry" to populate.</td></tr>';
+          hsBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:24px;">No street scan telemetry recorded yet. Perform an audit in the Scanner or test a street sample to generate verified views. (Zero dummy data mode)</td></tr>';
         } else {
           intel.hotspots.forEach(function (h) {
             var tr = document.createElement("tr");
@@ -253,7 +413,7 @@
       if (anBody) {
         anBody.innerHTML = "";
         if (!intel.anomalies.length) {
-          anBody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:18px;">No scanned merchants to cross-reference against Cybersyn POI database.</td></tr>';
+          anBody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:24px;">No scanned merchants to cross-reference against Cybersyn POI database yet.</td></tr>';
         } else {
           intel.anomalies.forEach(function (a) {
             var tr = document.createElement("tr");
@@ -274,7 +434,7 @@
     if (gemmaCards) {
       gemmaCards.innerHTML = "";
       if (!intel.gemmaFeed.length) {
-        gemmaCards.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:12px;">No corridors available. Populate scans to generate Gemma 4 intelligence feed.</div>';
+        gemmaCards.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:24px;text-align:center;">No corridors available yet. Perform audits in the Scanner to feed Google Gemma intelligence.</div>';
       } else {
         intel.gemmaFeed.forEach(function (g) {
           var div = document.createElement("div");
@@ -285,12 +445,48 @@
               '<strong>Security Tier:</strong> <code>' + g.securityTier + '</code><br>' +
               '<strong>Threat Probability:</strong> ' + g.fraudRate + ' · Avg Risk: ' + g.avgScore + '<br>' +
               '<strong>Sticker-Swap Incidents:</strong> ' + g.swapIncidents + '<br>' +
-              '<span style="display:inline-block;margin-top:6px;color:var(--chalk-dim);">Feeds Gemma 4 localized risk debrief</span>' +
+              '<span style="display:inline-block;margin-top:6px;color:var(--chalk-dim);">Feeds Google Gemma vernacular debrief</span>' +
             '</div>';
           gemmaCards.appendChild(div);
         });
       }
     }
+  }
+
+  // Snowflake Subnav Tabs
+  var subnavBtns = document.querySelectorAll(".coco-subnav .subnav-btn");
+  subnavBtns.forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      playPencilTap();
+      subnavBtns.forEach(function (b) { b.classList.remove("active"); });
+      btn.classList.add("active");
+      var sub = btn.getAttribute("data-sub");
+      var subs = {
+        hotspots: $("cocoSubHotspots"),
+        anomalies: $("cocoSubAnomalies"),
+        gemma: $("cocoSubGemma"),
+        sql: $("cocoSubSql")
+      };
+      Object.keys(subs).forEach(function (k) {
+        if (subs[k]) subs[k].hidden = (k !== sub);
+      });
+    });
+  });
+
+  // Copy SQL Button
+  var copySqlBtn = $("copySqlBtn");
+  if (copySqlBtn) {
+    copySqlBtn.addEventListener("click", async function () {
+      playPencilTap();
+      var code = $("sqlBox") ? $("sqlBox").innerText : "";
+      try {
+        await navigator.clipboard.writeText(code);
+        copySqlBtn.textContent = "✓ Copied to Clipboard!";
+        setTimeout(function () { copySqlBtn.textContent = "📋 Copy SQL"; }, 2000);
+      } catch (e) {
+        $("scanNote").textContent = "Could not copy SQL automatically.";
+      }
+    });
   }
 
   // -------------------------------------------------------------
@@ -299,7 +495,7 @@
   async function run() {
     var raw = $("payload").value.trim();
     if (!raw) {
-      $("scanNote").textContent = "Paste a QR payload or pick a street sample first.";
+      $("scanNote").textContent = "Paste a QR payload, pick a street sample, or upload an image first.";
       return;
     }
     $("scanNote").textContent = "";
@@ -371,7 +567,7 @@
       });
     }
 
-    // Gemma AI Explanation
+    // Gemma AI Vernacular Explanation
     var out = await window.TrailQRGemma.explain(r, currentPlace || area);
     $("explanation").textContent = out.text;
     $("gemmaMode").textContent = (out.mode === "gemma-live" ? "Gemma 4 · Live via Gemini API" : "Gemma 4 · Scripted Local Fallback");
@@ -394,7 +590,8 @@
     if (!current) return;
     window.TrailQRRegistry.add(current, true);
     renderRegistry();
-    $("scanNote").textContent = "🚨 Reported! A scrubbed row was added to the community registry — zero PII stored.";
+    if (window.TrailQRMap) window.TrailQRMap.renderMarkers();
+    $("scanNote").textContent = "🚨 Reported! A scrubbed row was added to the community registry and mapped — zero PII stored.";
   });
 
   $("saveSafe").addEventListener("click", function () {
@@ -402,7 +599,8 @@
     if (!current) return;
     window.TrailQRRegistry.add(current, false);
     renderRegistry();
-    $("scanNote").textContent = "🛡️ Verified safe find added to registry (scrubbed hash and masked payee only).";
+    if (window.TrailQRMap) window.TrailQRMap.renderMarkers();
+    $("scanNote").textContent = "🛡️ Verified safe find added to registry (scrubbed hash and masked payee only) and mapped.";
   });
 
   $("exportCsv").addEventListener("click", function () {
@@ -415,91 +613,20 @@
     URL.revokeObjectURL(a.href);
   });
 
-  // Section 3: Telemetry Seeding & Registry Clear
-  var seedBtn = $("seedTelemetryBtn");
-  if (seedBtn) {
-    seedBtn.addEventListener("click", function () {
-      playPencilTap();
-      window.TrailQRRegistry.seedDemoData();
-      renderRegistry();
-      $("scanNote").textContent = "📥 Pre-loaded 5 realistic Kolkata street audits into the registry table. Switch to Snowflake CoCo tab to view intelligence.";
-    });
-  }
-
   var clearRegBtn = $("clearRegistryBtn");
   if (clearRegBtn) {
     clearRegBtn.addEventListener("click", function () {
       playPencilTap();
       window.TrailQRRegistry.clear();
       renderRegistry();
+      if (window.TrailQRMap) window.TrailQRMap.renderMarkers();
       $("scanNote").textContent = "Community registry cleared.";
     });
   }
 
-  // Section 3: Mode Selector Tabs (Scans vs Snowflake)
-  var tabScans = $("tabScans");
-  var tabSnowflake = $("tabSnowflake");
-  var viewScansTab = $("viewScansTab");
-  var viewSnowflakeTab = $("viewSnowflakeTab");
-
-  if (tabScans && tabSnowflake) {
-    tabScans.addEventListener("click", function () {
-      playPencilTap();
-      tabScans.classList.add("active");
-      tabSnowflake.classList.remove("active");
-      if (viewScansTab) viewScansTab.hidden = false;
-      if (viewSnowflakeTab) viewSnowflakeTab.hidden = true;
-    });
-
-    tabSnowflake.addEventListener("click", function () {
-      playPencilTap();
-      tabSnowflake.classList.add("active");
-      tabScans.classList.remove("active");
-      if (viewScansTab) viewScansTab.hidden = true;
-      if (viewSnowflakeTab) viewSnowflakeTab.hidden = false;
-      renderSnowflakeIntelligence(window.TrailQRRegistry.load());
-    });
-  }
-
-  // Snowflake Panel: Subnav Buttons
-  var subnavBtns = document.querySelectorAll(".coco-subnav .subnav-btn");
-  subnavBtns.forEach(function (btn) {
-    btn.addEventListener("click", function () {
-      playPencilTap();
-      subnavBtns.forEach(function (b) { b.classList.remove("active"); });
-      btn.classList.add("active");
-      var sub = btn.getAttribute("data-sub");
-      var subs = {
-        hotspots: $("cocoSubHotspots"),
-        anomalies: $("cocoSubAnomalies"),
-        gemma: $("cocoSubGemma"),
-        sql: $("cocoSubSql")
-      };
-      Object.keys(subs).forEach(function (k) {
-        if (subs[k]) subs[k].hidden = (k !== sub);
-      });
-    });
-  });
-
-  // Copy SQL Button
-  var copySqlBtn = $("copySqlBtn");
-  if (copySqlBtn) {
-    copySqlBtn.addEventListener("click", async function () {
-      playPencilTap();
-      var code = $("sqlBox") ? $("sqlBox").innerText : "";
-      try {
-        await navigator.clipboard.writeText(code);
-        copySqlBtn.textContent = "✓ Copied to Clipboard!";
-        setTimeout(function () { copySqlBtn.textContent = "📋 Copy SQL"; }, 2000);
-      } catch (e) {
-        $("scanNote").textContent = "Could not copy SQL automatically.";
-      }
-    });
-  }
-
-  // Camera QR scan support — native BarcodeDetector where available
-  // (macOS/ChromeOS/Android), jsQR polyfill fallback for Windows/desktop
-  // Edge/Chrome where the native API exists but has no OS backend.
+  // -------------------------------------------------------------
+  // Camera QR Scanner Engine
+  // -------------------------------------------------------------
   var activeStream = null, activeTick = null;
   function stopCamera() {
     if (activeTick) { clearInterval(activeTick); activeTick = null; }
@@ -510,7 +637,6 @@
     var cameraBox = $("cameraBox");
     var video = $("video");
     var canvas = $("qrCanvas");
-    // Toggle off if already scanning
     if (activeStream) {
       stopCamera();
       if (video) video.hidden = true;
@@ -550,7 +676,6 @@
       activeTick = setInterval(async function () {
         if (!video.videoWidth) return;
         try {
-          // 1. Try native detector if available
           if (useNative && detector) {
             try {
               var codes = await detector.detect(video);
@@ -566,7 +691,6 @@
             } catch (detErr) {}
           }
 
-          // 2. High-speed software canvas scan (runs reliably on all platforms)
           if (ctx && canvas) {
             var w = video.videoWidth, h = video.videoHeight;
             var scale = Math.min(1, 1280 / Math.max(w, h));
@@ -574,7 +698,6 @@
             canvas.height = Math.floor(h * scale);
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            // Try jsQR
             if (jsQRFn) {
               var img = ctx.getImageData(0, 0, canvas.width, canvas.height);
               var res = jsQRFn(img.data, img.width, img.height, { inversionAttempts: "attemptBoth" });
@@ -589,7 +712,6 @@
               }
             }
 
-            // Try ZXing
             if (window.ZXing && window.ZXing.QRCodeReader) {
               try {
                 if (!window._zxingCamReader) window._zxingCamReader = new window.ZXing.QRCodeReader();
@@ -608,7 +730,7 @@
               } catch (zxErr) {}
             }
           }
-        } catch (e) { /* keep polling */ }
+        } catch (e) { /* continue polling */ }
       }, 250);
     } catch (e) {
       stopCamera();
@@ -618,7 +740,7 @@
   });
 
   // -------------------------------------------------------------
-  // QR Image File Upload & Decoder Engine
+  // QR Image File Upload & Robust Multi-Pass Decoder
   // -------------------------------------------------------------
   function clearUploadedImage() {
     var box = $("uploadPreviewBox");
@@ -648,7 +770,6 @@
   }
 
   async function decodeQRFromImageSource(imgElement) {
-    // 1. Try native BarcodeDetector if available
     if ("BarcodeDetector" in window) {
       try {
         var detector = new BarcodeDetector({ formats: ["qr_code"] });
@@ -661,16 +782,12 @@
 
     var origW = imgElement.naturalWidth || imgElement.width;
     var origH = imgElement.naturalHeight || imgElement.height;
-    if (!origW || !origH) {
-      throw new Error("Invalid image dimensions.");
-    }
+    if (!origW || !origH) throw new Error("Invalid image dimensions.");
 
     var jsQRFn = (typeof jsQR !== "undefined") ? jsQR : (window.jsQR || null);
     var canvas = document.createElement("canvas");
     var ctx = canvas.getContext("2d", { willReadFrequently: true });
-    if (!ctx) {
-      throw new Error("Canvas 2D context unavailable.");
-    }
+    if (!ctx) throw new Error("Canvas 2D context unavailable.");
 
     function tryJsQR(targetW, targetH, options) {
       if (!jsQRFn) return null;
@@ -726,20 +843,20 @@
 
     var maxDim = Math.max(origW, origH);
 
-    // Pass 1: Native resolution (essential for dense codes like BharatQR)
+    // Pass 1: Native resolution (vital for high density BharatQR)
     if (maxDim <= 1800) {
       var r = scanAt(origW, origH);
       if (r) return r;
     }
 
-    // Pass 2: Scaled resolution (~1000px max)
+    // Pass 2: Scaled resolution (~1000px)
     var scale1 = Math.min(1, 1000 / maxDim);
     var w1 = Math.floor(origW * scale1);
     var h1 = Math.floor(origH * scale1);
     var r1 = scanAt(w1, h1);
     if (r1) return r1;
 
-    // Pass 3: High resolution (~1600px max)
+    // Pass 3: High resolution (~1600px)
     if (maxDim > 1000) {
       var scale3 = Math.min(1, 1600 / maxDim);
       var w3 = Math.floor(origW * scale3);
@@ -748,21 +865,21 @@
       if (r3) return r3;
     }
 
-    // Pass 4: Lower scale (~600px max for macro close-ups)
+    // Pass 4: Lower scale (~600px for macro closeups)
     var scale4 = Math.min(1, 600 / maxDim);
     var w4 = Math.floor(origW * scale4);
     var h4 = Math.floor(origH * scale4);
     var r4 = scanAt(w4, h4);
     if (r4) return r4;
 
-    // Pass 5: Contrast enhanced pass
+    // Pass 5: Contrast enhanced
     canvas.width = w1;
     canvas.height = h1;
     ctx.drawImage(imgElement, 0, 0, w1, h1);
     var textContrast = tryJsQR(w1, h1, { enhanceContrast: true });
     if (textContrast) return { text: textContrast, engine: "jsQR (High Contrast)" };
 
-    // Pass 6: Center crop (zooming in 1.4x into center where user aims)
+    // Pass 6: Center crop
     if (origW > 300 && origH > 300) {
       var cropW = Math.floor(origW * 0.75);
       var cropH = Math.floor(origH * 0.75);
@@ -812,7 +929,6 @@
     if (metaEl) metaEl.textContent = fileSize ? fileSize : "Processing…";
     $("scanNote").textContent = "Decoding QR code from " + fileName + "…";
 
-    // Use FileReader to produce Data URL — guarantees clean canvas access on file:/// protocol
     var reader = new FileReader();
     reader.onerror = function () {
       if (statusBadge) {
@@ -903,7 +1019,7 @@
     });
   }
 
-  // Drag and drop support on dropzone
+  // Drag and drop support
   var dropzoneWrap = $("dropzoneWrap");
   if (dropzoneWrap) {
     ["dragenter", "dragover"].forEach(function (evt) {
@@ -938,7 +1054,7 @@
     });
   }
 
-  // Global paste handler to capture pasted screenshot images
+  // Global screenshot paste handler
   document.addEventListener("paste", function (e) {
     var items = (e.clipboardData || window.clipboardData) && (e.clipboardData || window.clipboardData).items;
     if (!items) return;
@@ -954,5 +1070,14 @@
     }
   });
 
+  // Apply initial translations & registry render
+  if (window.TrailQRI18n) {
+    window.TrailQRI18n.applyTranslations();
+  }
   renderRegistry();
+
+  // Initialize Threat Map silently
+  if (window.TrailQRMap) {
+    window.TrailQRMap.renderMarkers();
+  }
 })();

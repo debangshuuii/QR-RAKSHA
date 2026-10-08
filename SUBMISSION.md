@@ -32,8 +32,9 @@
 > 
 > **TrailQR Raksha** is a privacy-first, offline-capable QR security defense guard designed for street micro-transactions:
 > 1. **Deterministic Rules Decide:** A local 14-heuristic engine inspects payloads, merchant name mismatches, random payee accounts, pre-filled amounts, and brand spoofing before any money or credentials move.
-> 2. **Gemma 4 Explains:** Google Gemma 4 (open-weight AI) translates opaque technical findings into plain English and native vernacular Bengali (*"বিপদ — এই QR ব্যবহার করবেন না..."*).
-> 3. **Snowflake CoCo Intelligence:** Zero-PII telemetry (FNV-1a cryptographic hashes, coarse localities, masked handles) syncs to Snowflake. Snowflake CoCo (Cortex Code) pipelines cross-reference scans against **Cybersyn: Point of Interest & Business Open Data** from Snowflake Marketplace to catch sticker-swap clusters and feed risk corridors back into Gemma 4.
+> 2. **Gemma 4 Explains (Vernacular Bengali & Hindi):** Google Gemma 4 (open-weight AI) translates opaque technical findings into plain English, native Bengali (*"বিপদ — এই QR ব্যবহার করবেন না..."*), and Hindi (*"खतरा — इस QR का उपयोग न करें..."*).
+> 3. **Interactive Street Threat Map:** Live visual threat map plotting reported sticker-swap red flags, phishing danger zones, and verified safe merchant stands across West Bengal.
+> 4. **Snowflake CoCo Intelligence (Honest Standby Mode):** Zero-PII telemetry (FNV-1a cryptographic hashes, coarse localities, masked handles) is queued for Snowflake. Snowflake CoCo pipelines cross-reference scans against **Cybersyn: Point of Interest & Business Open Data** from Snowflake Marketplace to catch sticker-swap clusters and feed risk corridors back into Gemma 4 without fabricating dummy data.
 
 ---
 

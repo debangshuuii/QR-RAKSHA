@@ -6,425 +6,507 @@
 <title>TrailQR Raksha — Check a QR before you pay</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
 <link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body class="app-shell-body">
 
-<header>
-  <div class="header-container">
-    <div class="brand-row">
-      <div class="brand-title-group">
-        <div class="brand-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-            <path d="M9 12l2 2 4-4"/>
-          </svg>
-        </div>
-        <div>
-          <h1>
-            TrailQR Raksha
-            <span class="bengali-pill">ট্রেইলকিউআর সুরক্ষা</span>
-          </h1>
-        </div>
-      </div>
-      
-      <div class="header-controls">
-        <button type="button" id="soundToggle" class="sound-toggle-btn active" title="Toggle tactile pencil audio feedback">
-          <span id="soundIcon">🔊</span>
-          <span id="soundLabel">Audio Active</span>
-        </button>
-        <div class="live-badge">
-          <span class="pulse-dot"></span>
-          <span>Shield Active</span>
-        </div>
-      </div>
-    </div>
-
-    <p class="tag">
-      Check any QR before you pay — engineered for the streets and tea stalls of West Bengal.<br>
-      <strong>Deterministic rules decide. Gemma 4 explains. Nothing sensitive leaves your phone unsanitised.</strong>
-    </p>
-
-    <div class="drafting-tags-strip">
-      <span class="drafting-tag">⌖ 2H Drafting Matrix</span>
-      <span class="drafting-tag">✎ Zero PII Sanitised</span>
-      <span class="drafting-tag">🛡️ Anti-Sticker-Swap</span>
-      <span class="drafting-tag">❄️ Snowflake CoCo Schema</span>
-      <span class="drafting-tag">🤖 Gemma 4 Vernacular</span>
-    </div>
-
-    <div class="stats-strip">
-      <div class="stat-item">
-        <span class="stat-label">Street Audits Logged</span>
-        <span class="stat-value" id="statTotalAudits">0</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-label">Scams Blocked</span>
-        <span class="stat-value" id="statThreats" style="color: var(--signal-danger);">0</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-label">Safe Payees Verified</span>
-        <span class="stat-value" id="statSafe" style="color: var(--signal-safe);">0</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-label">Privacy Guarantee</span>
-        <span class="stat-value" style="color: var(--text-primary);">100% Client-Side</span>
-      </div>
-    </div>
-  </div>
-</header>
-
-<main>
-  <!-- SECTION 1: SCANNER & INPUT -->
-  <section class="card">
-    <h2>
-      <span class="section-num">01</span>
-      What are you scanning?
-      <span class="marginalia" style="margin-left: auto;">✎ "Select preset or paste raw payload"</span>
-    </h2>
-
-    <div class="samples-container">
-      <div class="samples-header">
-        <span class="samples-title">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-          </svg>
-          Quick Street Scenarios (Click to test instantly):
-        </span>
-      </div>
-      <div id="samples"></div>
-    </div>
-
-    <div class="input-with-tools" id="inputContainer">
-      <label for="payload">
-        Decoded QR text 
-        <span class="hint">(paste payload, upload QR image, or scan with camera)</span>
-      </label>
-      <div class="dropzone-wrap" id="dropzoneWrap">
-        <textarea id="payload" rows="3" placeholder="upi://pay?pa=...&pn=...  or  https://...  or drop / paste QR image"></textarea>
-        <div class="drop-overlay" id="dropOverlay">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="17 8 12 3 7 8"/>
-            <line x1="12" y1="3" x2="12" y2="15"/>
-          </svg>
-          <span>Drop QR image here to scan</span>
-        </div>
-      </div>
-      <div class="input-quick-actions">
-        <button type="button" id="uploadMicroBtn" class="micro-btn">📷 Upload Image</button>
-        <button type="button" id="pasteBtn" class="micro-btn">📋 Paste Clipboard</button>
-        <button type="button" id="clearBtn" class="micro-btn">🧹 Clear</button>
-      </div>
-    </div>
-
-    <!-- Uploaded Image Preview & Status Card -->
-    <div class="upload-preview-box" id="uploadPreviewBox" hidden>
-      <div class="upload-preview-thumb-wrap">
-        <img id="uploadPreviewImg" alt="Uploaded QR preview" class="upload-preview-thumb">
-      </div>
-      <div class="upload-preview-details">
-        <div class="upload-preview-header">
-          <span class="upload-preview-filename" id="uploadFilename">qr-image.png</span>
-          <span class="upload-preview-status" id="uploadStatusBadge">Scanning...</span>
-        </div>
-        <div class="upload-preview-meta" id="uploadMeta">Ready</div>
-      </div>
-      <button type="button" id="removeUploadBtn" class="micro-btn upload-close-btn" title="Remove uploaded image">✕</button>
-    </div>
-
-    <div class="row">
-      <label for="expected">
-        What name is on the shop / sign?
-        <span class="hint">(catches sticker swaps)</span>
-        <input id="expected" type="text" placeholder="e.g. Chai Dukaan">
-      </label>
-      <label for="area">
-        Area / Neighbourhood
-        <span class="hint">(coarse locality only — never exact GPS)</span>
-        <input id="area" type="text" placeholder="e.g. Rabindra Sarobar, Kolkata">
-      </label>
-    </div>
-
-    <div class="row" style="margin-top: 18px;">
-      <button id="analyse" class="primary">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+<div class="app-layout">
+  <!-- ============================================================ -->
+  <!-- LEFT SIDEBAR NAVIGATION                                      -->
+  <!-- ============================================================ -->
+  <aside class="app-sidebar" id="appSidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon-wrap" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
           <path d="M9 12l2 2 4-4"/>
         </svg>
-        Check this QR
-      </button>
-      <button id="uploadBtn" type="button">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-          <polyline points="17 8 12 3 7 8"/>
-          <line x1="12" y1="3" x2="12" y2="15"/>
-        </svg>
-        Upload QR image
-      </button>
-      <button id="scan" type="button">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-          <circle cx="12" cy="13" r="4"/>
-        </svg>
-        Scan with camera
-      </button>
-      <input type="file" id="qrFileInput" accept="image/*" style="display:none">
-    </div>
-
-    <div class="camera-box" id="cameraBox" hidden>
-      <video id="video" playsinline hidden></video>
-      <canvas id="qrCanvas" hidden></canvas>
-      <div class="laser-line"></div>
-    </div>
-
-    <p class="hint" id="scanNote"></p>
-  </section>
-
-  <!-- SECTION 2: VERDICT & AI INTEL -->
-  <section class="card" id="resultCard" hidden>
-    <h2>
-      <span class="section-num">02</span>
-      Security Audit Verdict
-      <span class="marginalia" style="margin-left: auto;">✎ "Deterministic heuristic breakdown"</span>
-    </h2>
-
-    <div class="verdict-header">
-      <div id="verdict" class="verdict"></div>
-    </div>
-
-    <!-- Threat Score Bar -->
-    <div class="score-meter-wrap">
-      <div class="score-meter-header">
-        <span>THREAT RISK SCORE</span>
-        <span id="scoreText">0 / 100</span>
       </div>
-      <div class="score-track" id="scoreTrack">
-        <div class="score-fill" id="scoreFill"></div>
+      <div class="brand-info">
+        <h1 class="brand-name">TrailQR Raksha</h1>
+        <div class="brand-vernacular">
+          <span class="lang-tag-bn">সুরক্ষা</span>
+          <span class="lang-tag-divider">·</span>
+          <span class="lang-tag-hi">रक्षा</span>
+        </div>
       </div>
-      <div class="score-labels">
-        <span>0 SAFE</span>
-        <span>25 LOW RISK</span>
-        <span>50 SUSPICIOUS</span>
-        <span>75 DANGER</span>
-        <span>100 CRITICAL</span>
-      </div>
+      <button type="button" class="sidebar-close-btn" id="sidebarCloseBtn" aria-label="Close Sidebar">✕</button>
     </div>
 
-    <div id="summary"></div>
+    <div class="sidebar-tagline" data-i18n="tagline">
+      Check any QR before you pay — engineered for street vendors, campuses, and daily micro-transactions.
+    </div>
 
-    <h3 style="font-family: var(--font-display); font-size: 14.5px; margin: 18px 0 10px; color: var(--chalk-muted); text-transform: uppercase; letter-spacing: 0.05em;">
-      Deterministic Heuristic Red Flags:
-    </h3>
-    <ul id="flags"></ul>
+    <!-- Navigation Menu Items -->
+    <nav class="sidebar-nav">
+      <button type="button" class="nav-item active" data-view="viewScanner" id="navItemScanner">
+        <span class="nav-icon">🔍</span>
+        <span class="nav-label" data-i18n="navScanner">Scan & Audit</span>
+        <span class="nav-badge live">Live</span>
+      </button>
 
-    <!-- Gemma 4 Intel Card -->
-    <div class="gemma-section">
-      <div class="gemma-header">
-        <h3>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 14.5h-2v-2h2zm0-4.5h-2V7h2z"/>
+      <button type="button" class="nav-item" data-view="viewMap" id="navItemMap">
+        <span class="nav-icon">🗺️</span>
+        <span class="nav-label" data-i18n="navMap">Threat Map</span>
+        <span class="nav-badge danger" id="sidebarThreatCount">2 Flags</span>
+      </button>
+
+      <button type="button" class="nav-item" data-view="viewRegistry" id="navItemRegistry">
+        <span class="nav-icon">📋</span>
+        <span class="nav-label" data-i18n="navRegistry">Audit Registry</span>
+        <span class="nav-badge" id="sidebarAuditCount">0</span>
+      </button>
+
+      <button type="button" class="nav-item" data-view="viewSnowflake" id="navItemSnowflake">
+        <span class="nav-icon">❄️</span>
+        <span class="nav-label" data-i18n="navSnowflake">Snowflake Pipeline</span>
+        <span class="nav-badge standby">Standby</span>
+      </button>
+
+      <button type="button" class="nav-item" data-view="viewAbout" id="navItemAbout">
+        <span class="nav-icon">📖</span>
+        <span class="nav-label" data-i18n="navAbout">About & Tracks</span>
+      </button>
+    </nav>
+
+    <!-- Sidebar Footer -->
+    <div class="sidebar-footer">
+      <div class="sidebar-lang-block">
+        <span class="sidebar-label">Language / ভাষা / भाषा:</span>
+        <div class="lang-switcher">
+          <button type="button" class="lang-btn active" data-lang="en">EN</button>
+          <button type="button" class="lang-btn" data-lang="bn">বাংলা</button>
+          <button type="button" class="lang-btn" data-lang="hi">हिन्दी</button>
+        </div>
+      </div>
+
+      <div class="sidebar-status-row">
+        <button type="button" id="soundToggle" class="sound-toggle-btn active" title="Toggle tactile graphite audio feedback">
+          <span id="soundIcon">🔊</span>
+          <span id="soundLabel" data-i18n="audioActive">Audio Active</span>
+        </button>
+        <div class="live-pill">
+          <span class="pulse-dot"></span>
+          <span data-i18n="shieldActive">Shield Active</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============================================================ -->
+  <!-- MAIN APPLICATION CONTENT AREA                               -->
+  <!-- ============================================================ -->
+  <div class="app-content-wrapper">
+    <!-- Top Action Bar -->
+    <header class="top-nav-bar">
+      <div class="top-bar-left">
+        <button type="button" class="sidebar-toggle-btn" id="sidebarToggle" aria-label="Toggle Sidebar Menu">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
           </svg>
-          Gemma AI Intelligence Debrief
-        </h3>
-        <span class="gemma-terminal-badge" id="gemmaMode"></span>
+        </button>
+        <div class="breadcrumb-title" id="breadcrumbTitle">Scan & Audit</div>
       </div>
-      <pre id="explanation"></pre>
-    </div>
 
-    <!-- Safe Trail Quest -->
-    <div id="questBox" hidden>
-      <h3>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"/>
-          <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
-        </svg>
-        Trail Quest Unlocked
-      </h3>
-      <p id="quest"></p>
-    </div>
-
-    <div class="row" style="margin-top: 20px;">
-      <button id="report" class="danger">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/>
-          <line x1="12" y1="8" x2="12" y2="12"/>
-          <line x1="12" y1="16" x2="12.01" y2="16"/>
-        </svg>
-        Report this QR Fraud
-      </button>
-      <button id="saveSafe">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-          <polyline points="17 21 17 13 7 13 7 21"/>
-          <polyline points="7 3 7 8 15 8"/>
-        </svg>
-        Add scrubbed find to registry
-      </button>
-    </div>
-
-    <p class="hint" style="margin-top: 14px; line-height: 1.5;">
-      🛡️ <strong>Zero-PII Guarantee:</strong> Only a scrubbed row is logged — cryptographic FNV-1a hash, display name, category, coarse neighbourhood, score and masked payee. Never raw QR payloads, full bank accounts, transaction amounts, or GPS coordinates.
-    </p>
-  </section>
-
-  <!-- SECTION 3: COMMUNITY REGISTRY & SNOWFLAKE PIPELINE -->
-  <section class="card">
-    <div class="registry-tools">
-      <h2>
-        <span class="section-num">03</span>
-        Community Registry & Snowflake Pipeline
-        <span class="hint">(CoCo Threat Intelligence)</span>
-      </h2>
-      <span class="marginalia">✎ "Zero-PII sync · snowflake/schema.sql"</span>
-    </div>
-
-    <!-- Mode Selector Tabs -->
-    <div class="section-tabs">
-      <button type="button" id="tabScans" class="tab-btn active">
-        <span>📋 Street Scans Telemetry</span>
-        <span class="tab-badge" id="scansCountBadge">0</span>
-      </button>
-      <button type="button" id="tabSnowflake" class="tab-btn">
-        <span>❄️ Snowflake CoCo Intelligence</span>
-        <span class="tab-badge highlight">MLH Track</span>
-      </button>
-    </div>
-
-    <!-- VIEW 1: Street Scans Table -->
-    <div id="viewScansTab">
-      <div class="registry-actions-bar">
-        <div class="btn-group-left">
-          <button type="button" id="seedTelemetryBtn" class="micro-btn primary-action">
-            📥 Load Demo Street Telemetry
-          </button>
-          <button type="button" id="clearRegistryBtn" class="micro-btn">
-            🧹 Clear Registry
-          </button>
+      <!-- Quick Metrics Strip -->
+      <div class="top-stats-strip">
+        <div class="stat-bubble">
+          <span class="stat-bubble-label" data-i18n="statAudits">Audits</span>
+          <span class="stat-bubble-val" id="statTotalAudits">0</span>
         </div>
-        <div class="btn-group-right">
-          <button id="exportCsv" type="button" class="micro-btn">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-              <polyline points="7 10 12 15 17 10"/>
-              <line x1="12" y1="15" x2="12" y2="3"/>
+        <div class="stat-bubble">
+          <span class="stat-bubble-label" data-i18n="statThreats">Threats</span>
+          <span class="stat-bubble-val text-danger" id="statThreats">0</span>
+        </div>
+        <div class="stat-bubble">
+          <span class="stat-bubble-label" data-i18n="statSafe">Safe</span>
+          <span class="stat-bubble-val text-safe" id="statSafe">0</span>
+        </div>
+        <div class="sync-status-pill standby" id="topSyncStatus" title="Honest sync status: Local Queue (no fake dummy cloud updates)">
+          <span class="dot-standby"></span>
+          <span>Snowflake: Local Queue</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="main-views-container">
+      <!-- ======================================================== -->
+      <!-- VIEW 1: SCANNER & AUDIT                                  -->
+      <!-- ======================================================== -->
+      <section class="app-view active" id="viewScanner">
+        <div class="view-header-strip">
+          <h2>
+            <span class="view-num" data-i18n="section1Num">01</span>
+            <span data-i18n="section1Title">What are you scanning?</span>
+          </h2>
+          <span class="marginalia">✎ "Deterministic rules decide · Gemma explains"</span>
+        </div>
+
+        <div class="samples-container">
+          <div class="samples-header">
+            <span class="samples-title" data-i18n="quickScenarios">Quick Street Scenarios (Click to test):</span>
+          </div>
+          <div id="samples"></div>
+        </div>
+
+        <div class="input-with-tools" id="inputContainer">
+          <label for="payload">
+            <span data-i18n="decodedQrLabel">Decoded QR text</span>
+            <span class="hint" data-i18n="decodedQrHint">(paste payload, upload QR image, or scan with camera)</span>
+          </label>
+          <div class="dropzone-wrap" id="dropzoneWrap">
+            <textarea id="payload" rows="3" placeholder="upi://pay?pa=...&pn=...  or  https://...  or drop / paste QR image"></textarea>
+            <div class="drop-overlay" id="dropOverlay">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              <span data-i18n="dropOverlayText">Drop QR image here to scan</span>
+            </div>
+          </div>
+          <div class="input-quick-actions">
+            <button type="button" id="uploadMicroBtn" class="micro-btn" data-i18n="uploadBtn">📷 Upload Image</button>
+            <button type="button" id="pasteBtn" class="micro-btn" data-i18n="pasteBtn">📋 Paste Clipboard</button>
+            <button type="button" id="clearBtn" class="micro-btn" data-i18n="clearBtn">🧹 Clear</button>
+          </div>
+        </div>
+
+        <!-- Image Upload Preview Card -->
+        <div class="upload-preview-box" id="uploadPreviewBox" hidden>
+          <div class="upload-preview-thumb-wrap">
+            <img id="uploadPreviewImg" alt="Uploaded QR preview" class="upload-preview-thumb">
+          </div>
+          <div class="upload-preview-details">
+            <div class="upload-preview-header">
+              <span class="upload-preview-filename" id="uploadFilename">qr-image.png</span>
+              <span class="upload-preview-status" id="uploadStatusBadge">Scanning...</span>
+            </div>
+            <div class="upload-preview-meta" id="uploadMeta">Ready</div>
+          </div>
+          <button type="button" id="removeUploadBtn" class="micro-btn upload-close-btn" title="Remove uploaded image">✕</button>
+        </div>
+
+        <div class="row">
+          <label for="expected">
+            <span data-i18n="expectedLabel">What name is on the shop / sign?</span>
+            <span class="hint" data-i18n="expectedHint">(catches sticker swaps)</span>
+            <input id="expected" type="text" placeholder="e.g. Chai Dukaan" data-i18n="expectedPlaceholder">
+          </label>
+          <label for="area">
+            <span data-i18n="areaLabel">Area / Neighbourhood</span>
+            <span class="hint" data-i18n="areaHint">(coarse locality only — never exact GPS)</span>
+            <input id="area" type="text" placeholder="e.g. Rabindra Sarobar, Kolkata" data-i18n="areaPlaceholder">
+          </label>
+        </div>
+
+        <div class="row" style="margin-top: 16px;">
+          <button id="analyse" class="primary" type="button">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              <path d="M9 12l2 2 4-4"/>
             </svg>
-            Export CSV for Snowflake
+            <span data-i18n="checkQrBtn">Check this QR</span>
           </button>
+          <button id="uploadBtn" type="button">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            <span data-i18n="uploadQrBtn">Upload QR image</span>
+          </button>
+          <button id="scan" type="button">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+              <circle cx="12" cy="13" r="4"/>
+            </svg>
+            <span data-i18n="scanCameraBtn">Scan with camera</span>
+          </button>
+          <input type="file" id="qrFileInput" accept="image/*" style="display:none">
         </div>
-      </div>
 
-      <div id="registryEmpty" class="hint">
-        No finds logged yet. Click <strong>"📥 Load Demo Street Telemetry"</strong> or test a sample above to populate.
-      </div>
-
-      <div class="table-wrapper">
-        <table id="registryTable" hidden>
-          <thead>
-            <tr>
-              <th>Hash (FNV-1a)</th>
-              <th>Name</th>
-              <th>Area</th>
-              <th>Verdict</th>
-              <th>Score</th>
-              <th>Reported</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- VIEW 2: Snowflake CoCo Intelligence Panel -->
-    <div id="viewSnowflakeTab" hidden>
-      <div class="snowflake-banner">
-        <div class="snowflake-badge-row">
-          <span class="track-tag">❄️ SNOWFLAKE CoCo (CORTEX CODE)</span>
-          <span class="track-tag">🌐 CYBERSYN MARKETPLACE POI</span>
-          <span class="track-tag">🤖 GEMMA 4 OPEN-WEIGHT AI</span>
+        <div class="camera-box" id="cameraBox" hidden>
+          <video id="video" playsinline hidden></video>
+          <canvas id="qrCanvas" hidden></canvas>
+          <div class="laser-line"></div>
         </div>
-        <p class="snowflake-desc">
-          Automated threat intelligence views engineered with <strong>Snowflake Cortex Code (CoCo)</strong>, joining community street audits with <strong>Cybersyn: Point of Interest & Business Open Data</strong> from Snowflake Marketplace to catch sticker-swap fraud and feed Gemma 4 localized risk briefs.
-        </p>
-        <div class="snowflake-links">
-          <a href="https://signup.snowflake.com/cortex-code/" target="_blank" rel="noopener">Cortex Code Portal ↗</a>
-          <a href="https://docs.snowflake.com/en/collaboration/consumer-listings-exploring" target="_blank" rel="noopener">Cybersyn Marketplace Listing ↗</a>
-          <a href="https://docs.snowflake.com/en/user-guide/sample-data" target="_blank" rel="noopener">Snowflake Sample Data ↗</a>
-        </div>
-      </div>
 
-      <!-- Sub-tabs within Snowflake Panel -->
-      <div class="coco-subnav">
-        <button type="button" class="subnav-btn active" data-sub="hotspots">📍 Neighborhood Hotspots</button>
-        <button type="button" class="subnav-btn" data-sub="anomalies">🛡️ Sticker-Swap Anomalies</button>
-        <button type="button" class="subnav-btn" data-sub="gemma">🤖 Gemma AI Brief Feed</button>
-        <button type="button" class="subnav-btn" data-sub="sql">📜 CoCo SQL DDL</button>
-      </div>
+        <p class="hint" id="scanNote"></p>
 
-      <!-- Sub-view 1: Hotspots -->
-      <div id="cocoSubHotspots" class="coco-subcontent">
-        <div class="subview-header">
-          <h4>V_FRAUD_HOTSPOTS_BY_AREA</h4>
-          <span class="hint">Aggregated threat density & fraud percentages by locality</span>
+        <!-- AUDIT VERDICT CARD -->
+        <div class="card result-card" id="resultCard" hidden>
+          <div class="verdict-header">
+            <div id="verdict" class="verdict"></div>
+          </div>
+
+          <!-- Threat Score Bar -->
+          <div class="score-meter-wrap">
+            <div class="score-meter-header">
+              <span data-i18n="threatScoreTitle">THREAT RISK SCORE</span>
+              <span id="scoreText">0 / 100</span>
+            </div>
+            <div class="score-track" id="scoreTrack">
+              <div class="score-fill" id="scoreFill"></div>
+            </div>
+            <div class="score-labels">
+              <span>0 SAFE</span>
+              <span>25 LOW RISK</span>
+              <span>50 SUSPICIOUS</span>
+              <span>75 DANGER</span>
+              <span>100 CRITICAL</span>
+            </div>
+          </div>
+
+          <div id="summary"></div>
+
+          <h3 class="card-subtitle" data-i18n="redFlagsTitle">
+            Deterministic Heuristic Red Flags:
+          </h3>
+          <ul id="flags"></ul>
+
+          <!-- Gemma AI Vernacular Explanation -->
+          <div class="gemma-section">
+            <div class="gemma-header">
+              <h3>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 14.5h-2v-2h2zm0-4.5h-2V7h2z"/>
+                </svg>
+                <span data-i18n="gemmaTitle">Gemma AI Vernacular Debrief</span>
+              </h3>
+              <span class="gemma-terminal-badge" id="gemmaMode"></span>
+            </div>
+            <pre id="explanation"></pre>
+          </div>
+
+          <!-- Safe Trail Quest -->
+          <div id="questBox" hidden>
+            <h3>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
+              </svg>
+              <span data-i18n="questTitle">Trail Quest Unlocked</span>
+            </h3>
+            <p id="quest"></p>
+          </div>
+
+          <div class="row" style="margin-top: 20px;">
+            <button id="report" class="danger" type="button">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              <span data-i18n="reportBtn">Report this QR Fraud</span>
+            </button>
+            <button id="saveSafe" type="button">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                <polyline points="17 21 17 13 7 13 7 21"/>
+                <polyline points="7 3 7 8 15 8"/>
+              </svg>
+              <span data-i18n="saveSafeBtn">Add scrubbed find to registry</span>
+            </button>
+          </div>
+
+          <p class="hint zero-pii-note" data-i18n="zeroPiiNote">
+            🛡️ Zero-PII Guarantee: Only a scrubbed row is logged — cryptographic FNV-1a hash, coarse neighborhood, score, and masked payee. Never raw payloads, accounts, or exact GPS.
+          </p>
         </div>
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- VIEW 2: THREAT MAP (GLOBAL & LOCAL STREET WARNINGS)      -->
+      <!-- ======================================================== -->
+      <section class="app-view" id="viewMap">
+        <div class="view-header-strip">
+          <div>
+            <h2 data-i18n="mapTitle">Global & Street Threat Map</h2>
+            <p class="view-subtitle" data-i18n="mapHint">
+              Interactive visual map displaying reported QR red flags, danger zones, and verified merchant stands.
+            </p>
+          </div>
+        </div>
+
+        <div class="map-controls-bar">
+          <div class="map-filter-group">
+            <button type="button" class="micro-btn active" data-map-filter="all" data-i18n="filterAll">All Locations</button>
+            <button type="button" class="micro-btn filter-danger-btn" data-map-filter="danger" data-i18n="filterDanger">🔴 Red Flags Only</button>
+            <button type="button" class="micro-btn filter-safe-btn" data-map-filter="safe" data-i18n="filterSafe">🟢 Safe Spots Only</button>
+          </div>
+
+          <div class="map-search-wrap">
+            <input type="text" id="mapSearchInput" placeholder="Locate area (e.g. Park Street, Salt Lake)...">
+          </div>
+        </div>
+
+        <!-- Leaflet Map Container -->
+        <div class="threat-map-wrapper">
+          <div id="threatMapContainer"></div>
+        </div>
+
+        <!-- Map Summary Legend Bar -->
+        <div class="map-legend-bar">
+          <div class="legend-item">
+            <span class="legend-pin danger">⚠️</span>
+            <span data-i18n="mapLegendDanger">Reported Sticker Swap / Phishing</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-pin safe">🛡️</span>
+            <span data-i18n="mapLegendSafe">Verified Authentic Merchant</span>
+          </div>
+          <div class="legend-stats">
+            <span>Total Mapped: <strong id="mapStatTotal">0</strong></span>
+            <span>· Active Red Flags: <strong id="mapStatDanger" style="color:var(--signal-danger)">0</strong></span>
+            <span>· Verified Safe: <strong id="mapStatSafe" style="color:var(--signal-safe)">0</strong></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- VIEW 3: AUDIT REGISTRY                                   -->
+      <!-- ======================================================== -->
+      <section class="app-view" id="viewRegistry">
+        <div class="view-header-strip">
+          <div>
+            <h2 data-i18n="registryTitle">Community Audit Registry</h2>
+            <p class="view-subtitle" data-i18n="registryHint">
+              Local zero-PII audit ledger queued for Snowflake export
+            </p>
+          </div>
+          <div class="btn-group-right">
+            <button type="button" id="clearRegistryBtn" class="micro-btn" data-i18n="clearRegistryBtn">🧹 Clear Registry</button>
+            <button type="button" id="exportCsv" class="micro-btn" data-i18n="exportCsvBtn">Export CSV for Snowflake</button>
+          </div>
+        </div>
+
+        <div id="registryEmpty" class="registry-empty-box" data-i18n="registryEmptyText">
+          No audits recorded yet. Scan or test a QR code in the Scanner to log your first verified audit.
+        </div>
+
         <div class="table-wrapper">
-          <table id="cocoHotspotsTable">
+          <table id="registryTable" hidden>
             <thead>
               <tr>
-                <th>Locality</th>
-                <th>Total Scans</th>
-                <th>Threats</th>
-                <th>Fraud Rate</th>
-                <th>Avg Score</th>
+                <th>Hash (FNV-1a)</th>
+                <th>Name</th>
+                <th>Area</th>
+                <th>Verdict</th>
+                <th>Score</th>
+                <th>Reported</th>
               </tr>
             </thead>
             <tbody></tbody>
           </table>
         </div>
-      </div>
+      </section>
 
-      <!-- Sub-view 2: Anomalies -->
-      <div id="cocoSubAnomalies" class="coco-subcontent" hidden>
-        <div class="subview-header">
-          <h4>V_STICKER_SWAP_ANOMALIES</h4>
-          <span class="hint">Cross-referenced with Cybersyn Verified Merchant POI dataset</span>
+      <!-- ======================================================== -->
+      <!-- VIEW 4: SNOWFLAKE PIPELINE & HONEST SYNC STATUS           -->
+      <!-- ======================================================== -->
+      <section class="app-view" id="viewSnowflake">
+        <div class="view-header-strip">
+          <div>
+            <h2 data-i18n="snowflakeTitle">Snowflake CoCo Pipeline & Sync Status</h2>
+            <p class="view-subtitle">Zero-PII Data Engineering & Marketplace POI Cross-Reference</p>
+          </div>
         </div>
-        <div class="table-wrapper">
-          <table id="cocoAnomaliesTable">
-            <thead>
-              <tr>
-                <th>Scanned Merchant</th>
-                <th>Locality</th>
-                <th>Registered POI Entity</th>
-                <th>Classification</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </div>
 
-      <!-- Sub-view 3: Gemma Feed -->
-      <div id="cocoSubGemma" class="coco-subcontent" hidden>
-        <div class="subview-header">
-          <h4>V_GEMMA_AI_NEIGHBOURHOOD_BRIEF</h4>
-          <span class="hint">Structured corridors feeding Gemma 4 vernacular debriefs</span>
+        <!-- Honest Status Banner -->
+        <div class="honest-status-card">
+          <div class="honest-status-header">
+            <span class="status-indicator-dot standby"></span>
+            <strong data-i18n="snowflakeStatusTitle">Snowflake Cloud Sync Status:</strong>
+            <span class="status-badge-pill" data-i18n="snowflakeStatusStandby">🟡 Standby / Local Queue Mode</span>
+          </div>
+          <p class="honest-status-desc" data-i18n="snowflakeStatusDesc">
+            No active Snowflake account connected. Cloud sync is in offline queue mode to preserve data integrity. We do not inject fake cloud data. Telemetry is saved locally in zero-PII RFC CSV format, ready for ingestion via snowflake/schema.sql when your account is configured.
+          </p>
+          <div class="connect-guide-box">
+            <strong data-i18n="howToConnect">How to connect a Snowflake Trial account:</strong>
+            <ul>
+              <li data-i18n="step1">1. Create a free trial account at signup.snowflake.com</li>
+              <li data-i18n="step2">2. Execute snowflake/schema.sql in Snowsight to create TRAILQR database and views</li>
+              <li data-i18n="step3">3. Run node snowflake/pipeline.js or set environment variables to stream real telemetry</li>
+            </ul>
+          </div>
         </div>
-        <div id="cocoGemmaCards" class="gemma-brief-cards"></div>
-      </div>
 
-      <!-- Sub-view 4: SQL DDL -->
-      <div id="cocoSubSql" class="coco-subcontent" hidden>
-        <div class="subview-header">
-          <h4>Snowflake DDL & Pipeline Queries</h4>
-          <button type="button" id="copySqlBtn" class="micro-btn">📋 Copy SQL</button>
+        <!-- CoCo Analytics Subnav -->
+        <div class="coco-subnav">
+          <button type="button" class="subnav-btn active" data-sub="hotspots" data-i18n="tabHotspots">📍 Locality Hotspots</button>
+          <button type="button" class="subnav-btn" data-sub="anomalies" data-i18n="tabAnomalies">🛡️ Sticker-Swap Anomalies</button>
+          <button type="button" class="subnav-btn" data-sub="gemma" data-i18n="tabGemmaFeed">🤖 Gemma AI Corridors</button>
+          <button type="button" class="subnav-btn" data-sub="sql" data-i18n="tabSqlDdl">📜 CoCo SQL DDL</button>
         </div>
-        <pre class="sql-box" id="sqlBox"><code>-- ============================================================================
+
+        <!-- Hotspots Subview -->
+        <div id="cocoSubHotspots" class="coco-subcontent">
+          <div class="subview-header">
+            <h4>V_FRAUD_HOTSPOTS_BY_AREA</h4>
+            <span class="hint">Aggregated threat density & fraud percentages computed from real audits</span>
+          </div>
+          <div class="table-wrapper">
+            <table id="cocoHotspotsTable">
+              <thead>
+                <tr>
+                  <th>Locality</th>
+                  <th>Total Scans</th>
+                  <th>Threats</th>
+                  <th>Fraud Rate</th>
+                  <th>Avg Score</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Anomalies Subview -->
+        <div id="cocoSubAnomalies" class="coco-subcontent" hidden>
+          <div class="subview-header">
+            <h4>V_STICKER_SWAP_ANOMALIES</h4>
+            <span class="hint">Cross-referenced against Snowflake Marketplace Cybersyn POI directory</span>
+          </div>
+          <div class="table-wrapper">
+            <table id="cocoAnomaliesTable">
+              <thead>
+                <tr>
+                  <th>Scanned Merchant</th>
+                  <th>Locality</th>
+                  <th>Registered POI Entity</th>
+                  <th>Classification</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Gemma Feed Subview -->
+        <div id="cocoSubGemma" class="coco-subcontent" hidden>
+          <div class="subview-header">
+            <h4>V_GEMMA_AI_NEIGHBOURHOOD_BRIEF</h4>
+            <span class="hint">Corridor risk tiers feeding Google Gemma 4 vernacular debriefs</span>
+          </div>
+          <div id="cocoGemmaCards" class="gemma-brief-cards"></div>
+        </div>
+
+        <!-- SQL DDL Subview -->
+        <div id="cocoSubSql" class="coco-subcontent" hidden>
+          <div class="subview-header">
+            <h4>Snowflake Pipeline DDL (Authored with CoCo)</h4>
+            <button type="button" id="copySqlBtn" class="micro-btn">📋 Copy SQL</button>
+          </div>
+          <pre class="sql-box" id="sqlBox"><code>-- ============================================================================
 -- Snowflake CoCo Analytics Pipeline Views
 -- ============================================================================
 
--- 1. Neighborhood Threat Aggregations
 CREATE OR REPLACE VIEW TRAILQR.REGISTRY.V_FRAUD_HOTSPOTS_BY_AREA AS
 SELECT
   coarse_area,
@@ -436,7 +518,6 @@ FROM TRAILQR.REGISTRY.QR_REGISTRY
 GROUP BY coarse_area
 ORDER BY threat_count DESC;
 
--- 2. Sticker-Swap Anomaly Detection (Cybersyn POI Cross-Reference)
 CREATE OR REPLACE VIEW TRAILQR.REGISTRY.V_STICKER_SWAP_ANOMALIES AS
 SELECT
   r.qr_hash,
@@ -453,7 +534,6 @@ LEFT JOIN TRAILQR.REGISTRY.CYBERSYN_VERIFIED_MERCHANTS c
   ON LOWER(r.coarse_area) = LOWER(c.coarse_area)
   AND LOWER(r.display_name) LIKE '%' || LOWER(c.merchant_name) || '%';
 
--- 3. Feed for Gemma 4 Vernacular Security Debriefs
 CREATE OR REPLACE VIEW TRAILQR.REGISTRY.V_GEMMA_AI_NEIGHBOURHOOD_BRIEF AS
 SELECT
   h.coarse_area,
@@ -466,31 +546,84 @@ SELECT
     ELSE 'GENERALLY_SAFE_COMMUNITY'
   END AS security_tier
 FROM TRAILQR.REGISTRY.V_FRAUD_HOTSPOTS_BY_AREA h;</code></pre>
-      </div>
-    </div>
-  </section>
-</main>
+        </div>
+      </section>
 
-<footer>
-  <p>
-    <strong>TrailQR Raksha</strong> · Open-source (MIT) · Built for Kolkata & West Bengal Street Defense.<br>
-    Deterministic 14-heuristic rule engine decides · Google Gemma 4 explains · Snowflake CoCo threat correlation.<br>
-    <em>Limitation Notice:</em> Client-side rules flag red-flag indicators; always verify the payee name in your payment app before entering PIN.
-  </p>
-  <div class="footer-badges">
-    <span class="drafting-tag">MIT LICENSE</span>
-    <span class="drafting-tag">OWASP JIS UNIVERSITY</span>
-    <span class="drafting-tag">GOOGLE GEMMA 4</span>
-    <span class="drafting-tag">SNOWFLAKE COCO</span>
-    <span class="drafting-tag">GRAPHITE + TASTE</span>
+      <!-- ======================================================== -->
+      <!-- VIEW 5: ABOUT & CYBER DEFENSE TRACKS                     -->
+      <!-- ======================================================== -->
+      <section class="app-view" id="viewAbout">
+        <div class="view-header-strip">
+          <div>
+            <h2>Cyber Defense & Challenge Tracks</h2>
+            <p class="view-subtitle">OWASP Threat Model · Open-Source AI Architecture · Team Details</p>
+          </div>
+        </div>
+
+        <div class="about-grid">
+          <div class="card about-card">
+            <h3>🛡️ OWASP JIS University Cybersecurity Model</h3>
+            <ul class="about-list">
+              <li><strong>The Attack:</strong> Physical QR sticker swaps over merchant counters & quishing links.</li>
+              <li><strong>The Vulnerability:</strong> Blind matrix trust; payment apps only show payees <em>inside</em> transaction flow.</li>
+              <li><strong>The Security Control:</strong> Pre-transaction deterministic 14-rule scoring + Zero-PII sanitization.</li>
+              <li><strong>The Result:</strong> Threat mitigated before credentials or money move.</li>
+            </ul>
+          </div>
+
+          <div class="card about-card">
+            <h3>🤖 Google Gemma & Open-Source AI Role</h3>
+            <ul class="about-list">
+              <li><strong>Separation of Concerns:</strong> Deterministic rules <em>decide</em>; Gemma <em>explains</em>.</li>
+              <li><strong>Vernacular Translations:</strong> Renders warnings in English, Bengali, and Hindi.</li>
+              <li><strong>Model Evaluation Harness:</strong> 16-check evaluation benchmark (`harness/eval_harness.mjs`).</li>
+            </ul>
+          </div>
+
+          <div class="card about-card">
+            <h3>👥 Team Raksha (Techno Main Salt Lake, Kolkata)</h3>
+            <ul class="about-list">
+              <li><strong>Sudipta Sanki:</strong> Security Architecture & Deterministic Engine (2nd Year, CSE)</li>
+              <li><strong>Soumyabrata Mukherjee:</strong> AI Integration & Gemma Explanations (2nd Year, CSE)</li>
+              <li><strong>Debangshu Sinha:</strong> Full-Stack Interface, Threat Map & Snowflake Pipeline (2nd Year, CSE)</li>
+            </ul>
+          </div>
+
+          <div class="card about-card">
+            <h3>📜 Open-Source Compliance & Links</h3>
+            <ul class="about-list">
+              <li><strong>License:</strong> MIT Open-Source License (<a href="LICENSE" target="_blank">LICENSE</a>)</li>
+              <li><strong>Repository:</strong> <a href="https://github.com/debangshuuii/QR-RAKSHA" target="_blank" rel="noopener">github.com/debangshuuii/QR-RAKSHA</a></li>
+              <li><strong>Automated Tests:</strong> 8/8 test assertions passing (`node --test tests/rules.test.mjs`)</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- App Shell Footer -->
+    <footer class="app-footer">
+      <div class="footer-left">
+        <strong>TrailQR Raksha</strong> · Open-Source (MIT) · Built for Kolkata & West Bengal Street Defense
+      </div>
+      <div class="footer-badges">
+        <span class="drafting-tag">OWASP JIS</span>
+        <span class="drafting-tag">GOOGLE GEMMA 4</span>
+        <span class="drafting-tag">SNOWFLAKE COCO</span>
+        <span class="drafting-tag">GRAPHITE + TASTE</span>
+      </div>
+    </footer>
   </div>
-</footer>
+</div>
 
 <script src="config.js"></script>
 <script src="js/rules.js"></script>
 <script src="js/samples.js"></script>
+<script src="js/i18n.js"></script>
 <script src="js/gemma.js"></script>
 <script src="js/registry.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="js/map.js"></script>
 <script src="js/zxing.min.js"></script>
 <script src="js/jsQR.js"></script>
 <script src="app.js"></script>

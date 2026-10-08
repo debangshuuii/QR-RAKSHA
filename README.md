@@ -46,17 +46,21 @@ Kolkata — and India — runs on QR codes. Tea stalls, taxis, parking, donation
    * Decodes UPI, URL, Wi-Fi, and raw text payloads without cloud reliance.
    * Scores 14 specific red flags: payee mismatch against shop sign (sticker swap), random/personal payee accounts, pre-filled amounts, unknown PSP handles, non-HTTPS protocols, link shorteners, punycode, brand imitation in subdomains, direct IP hosts, and KYC/OTP pressure words.
    * Produces an objective score (0–100) and strict verdict: **SAFE / CAUTION / DANGEROUS**.
-2. **Gemma Explains (Open-Weight AI):**
-   * **Google Gemma 4** (via Gemini API) translates the structured risk flags into plain English and a vernacular Bengali advisory line (*"বিপদ — এই QR ব্যবহার করবেন না..."*).
+2. **Left Sidebar Navigation & Clean App Shell:**
+   * Re-engineered into a clean, modular sidebar architecture with 5 dedicated views: **Scan & Audit (01)**, **Threat Map (02)**, **Audit Registry (03)**, **Snowflake Pipeline (04)**, and **About & Tracks (05)**.
+   * Eliminates cluttered vertical text stacking so users can focus on scanning, mapping, or analytics independently.
+3. **Native Vernacular Support (Bengali & Hindi):**
+   * Complete multilingual engine supporting **English (EN)**, **Bengali (বাংলা)**, and **Hindi (हिन्दी)** with an interactive language switcher.
+   * **Google Gemma 4** translates structured risk flags and heuristics into native vernacular debriefs (*"বিপদ — এই QR ব্যবহার করবেন না..."* / *"खतरा — इस QR का उपयोग न करें..."*) for street vendors and everyday citizens.
    * **Rule Integrity:** Gemma *explains* the verdict; it never decides it. Security remains 100% reproducible and immune to prompt injection.
    * **Scripted Fallback:** Works fully offline with zero internet access.
-3. **Privacy by Design (Zero Sensitive Data Leaves the Device):**
+4. **Interactive Global & Street Threat Map:**
+   * Visualizes known QR danger zones (such as reported sticker-swap spots at Rabindra Sarobar and parking quishing at Park Street) alongside verified safe merchant stands (Techno Main Salt Lake, Coffee House).
+   * Displays animated radar pins, historical red flag warnings, avoidances, and neighborhood filters.
+5. **Zero-PII Community Registry & Honest Snowflake Pipeline:**
    * Never stores or transmits raw QR payloads, full payee addresses, transaction amounts, or exact GPS coordinates.
-   * Logs only privacy-scrubbed records: payload hash (FNV-1a), display name, category, coarse locality (e.g., *Rabindra Sarobar*), verdict, score, and masked payee (`rk***@paytm`).
-4. **Community Registry (Snowflake Integration):**
-   * Exports scrubbed logs as CSV directly formatted for Snowflake (`snowflake/schema.sql`).
-   * Explored with **Snowflake CoCo** to detect fraud hotspots and scam clusters by neighbourhood.
-5. **The Safe Trail Quest:**
+   * **Honest Cloud Sync Disclosure:** Does *not* generate fake dummy cloud data. Operates honestly in **Standby / Local Queue Mode** when no cloud credentials exist. Real audits are queued locally in RFC CSV format ready for ingestion via `snowflake/schema.sql` and `snowflake/pipeline.js`.
+6. **The Safe Trail Quest:**
    * Safe finds unlock a lightweight Gemma-generated exploration quest in West Bengal to reward community verification.
 
 ---

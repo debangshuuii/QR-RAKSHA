@@ -1146,6 +1146,39 @@ video {
   cursor: wait;
 }
 
+.map-basemap-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.basemap-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.basemap-btn-group {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.basemap-btn.active {
+  border-color: var(--text-primary) !important;
+  background: var(--bg-hover) !important;
+  color: var(--text-primary) !important;
+}
+
+.basemap-hint {
+  font-size: 11.5px;
+  color: var(--text-muted, var(--text-secondary));
+}
+
 .nearby-status-card {
   margin-bottom: 14px;
   padding: 12px 16px;

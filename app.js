@@ -212,6 +212,21 @@
     });
   });
 
+  // Basemap switcher: Dark (old default) + Streets + Satellite
+  var basemapBtns = document.querySelectorAll("[data-basemap]");
+  basemapBtns.forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      playPencilTap();
+      var name = btn.getAttribute("data-basemap");
+      if (window.TrailQRMap && window.TrailQRMap.setBasemap) {
+        window.TrailQRMap.setBasemap(name);
+      } else {
+        basemapBtns.forEach(function (b) { b.classList.remove("active"); });
+        btn.classList.add("active");
+      }
+    });
+  });
+
   var mapSearchInput = $("mapSearchInput");
   if (mapSearchInput) {
     mapSearchInput.addEventListener("input", function (e) {

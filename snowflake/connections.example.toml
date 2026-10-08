@@ -1,0 +1,14 @@
+# Snowflake Cortex Code (CoCo) Connection Configuration
+# Copy this file to: C:\Users\DEBANGSHU SINHA\.snowflake\connections.toml
+# Or let CoCo create it automatically by running: cortex
+
+default_connection_name = "default"
+
+[default]
+account = "<YOUR_ACCOUNT_IDENTIFIER>"   # e.g. "xy12345.ap-southeast-1" or "ORGNAME-ACCOUNTNAME"
+user = "<YOUR_USERNAME>"               # e.g. "DEBANGSHU"
+password = "<YOUR_PASSWORD>"
+database = "TRAILQR"
+schema = "REGISTRY"
+warehouse = "COMPUTE_WH"
+role = "ACCOUNTADMIN"

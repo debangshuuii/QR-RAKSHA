@@ -1,7 +1,8 @@
 /**
  * TrailQR Raksha — Real-Only Street Threat Map & Live Geolocation Engine
  * ZERO Dummy Data: Plots exclusively genuine local audits performed by the user.
- * Supports: Live Location ("Locate Me"), Nearest Scanned Details, Esri World Dark Gray Canvas.
+ * Supports: Live Location ("Locate Me"), Nearest Scanned Details,
+ * Basemaps: Dark Canvas (default) + Streets + Satellite (Esri, keyless).
  */
 (function () {
   "use strict";
@@ -10,6 +11,9 @@
   var markersLayer = null;
   var userMarker = null;
   var currentFilter = "all";
+  var currentBasemap = "dark";
+  var baseLayers = {};
+  var layerControl = null;
 
   // Haversine distance calculator in meters
   function getDistanceMeters(lat1, lon1, lat2, lon2) {
@@ -94,19 +98,52 @@
         scrollWheelZoom: false
       });
 
-      // Enterprise Esri World Dark Gray Canvas (Zero API keys, never blocks local apps)
-      L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}", {
+      // --- Basemaps: Dark (default) + Streets + Satellite (all Esri, keyless) ---
+      var darkBase = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}", {
         attribution: 'Tiles &copy; Esri, DeLorme, NAVTEQ',
         maxNativeZoom: 16,
         maxZoom: 19
-      }).addTo(mapInstance);
+      });
 
-      // Clean street and landmark labels overlay
-      L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}", {
+      // Clean street and landmark labels overlay (for Dark Canvas)
+      var darkLabels = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}", {
         attribution: '',
         maxNativeZoom: 16,
         maxZoom: 19
-      }).addTo(mapInstance);
+      });
+
+      var streetBase = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}", {
+        attribution: 'Tiles &copy; Esri, DeLorme, NAVTEQ, TomTom, Intermap, USGS',
+        maxNativeZoom: 19,
+        maxZoom: 19
+      });
+
+      var satelliteBase = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+        attribution: 'Imagery &copy; Esri, Maxar, Earthstar Geographics',
+        maxNativeZoom: 19,
+        maxZoom: 19
+      });
+
+      // Place / boundary labels overlay so Satellite stays readable
+      var satelliteLabels = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}", {
+        attribution: '',
+        maxNativeZoom: 19,
+        maxZoom: 19
+      });
+
+      baseLayers.dark = L.layerGroup([darkBase, darkLabels]);
+      baseLayers.streets = L.layerGroup([streetBase]);
+      baseLayers.satellite = L.layerGroup([satelliteBase, satelliteLabels]);
+
+      baseLayers.dark.addTo(mapInstance);
+      currentBasemap = "dark";
+
+      // Built-in Leaflet switcher (top-right) + custom buttons call the same setBasemap()
+      layerControl = L.control.layers({
+        "Dark Canvas": baseLayers.dark,
+        "Streets": baseLayers.streets,
+        "Satellite": baseLayers.satellite
+      }, null, { position: "topright" }).addTo(mapInstance);
 
       markersLayer = L.layerGroup().addTo(mapInstance);
 
@@ -248,6 +285,34 @@
     if (!mapInstance) renderFallbackList();
   }
 
+  function setBasemap(name) {
+    if (!name || !baseLayers[name]) return;
+    if (!mapInstance) {
+      currentBasemap = name;
+      syncBasemapButtons();
+      return;
+    }
+    if (currentBasemap && baseLayers[currentBasemap]) {
+      mapInstance.removeLayer(baseLayers[currentBasemap]);
+    }
+    baseLayers[name].addTo(mapInstance);
+    // Keep scan pins + live user pin above the new basemap
+    if (markersLayer) markersLayer.bringToFront();
+    currentBasemap = name;
+    syncBasemapButtons();
+  }
+
+  function getBasemap() {
+    return currentBasemap;
+  }
+
+  function syncBasemapButtons() {
+    var btns = document.querySelectorAll("[data-basemap]");
+    btns.forEach(function (b) {
+      b.classList.toggle("active", b.getAttribute("data-basemap") === currentBasemap);
+    });
+  }
+
   function panToLocality(query) {
     if (!query) return;
     query = query.toLowerCase().trim();
@@ -363,6 +428,8 @@
     init: initMap,
     renderMarkers: renderMarkers,
     setFilter: setFilter,
+    setBasemap: setBasemap,
+    getBasemap: getBasemap,
     panToLocality: panToLocality,
     locateUser: locateUser,
     getAllPoints: getAllPoints,

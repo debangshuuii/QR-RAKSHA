@@ -269,46 +269,204 @@
     </p>
   </section>
 
-  <!-- SECTION 3: COMMUNITY REGISTRY -->
+  <!-- SECTION 3: COMMUNITY REGISTRY & SNOWFLAKE PIPELINE -->
   <section class="card">
     <div class="registry-tools">
       <h2>
         <span class="section-num">03</span>
-        Community Registry
-        <span class="hint">(Snowflake Sync Table)</span>
+        Community Registry & Snowflake Pipeline
+        <span class="hint">(CoCo Threat Intelligence)</span>
       </h2>
-      <span class="marginalia">✎ "Columns mirror snowflake/schema.sql"</span>
+      <span class="marginalia">✎ "Zero-PII sync · snowflake/schema.sql"</span>
     </div>
 
-    <div id="registryEmpty" class="hint">
-      No finds logged yet. Select a sample above or scan a QR to initiate audit log.
-    </div>
-
-    <div class="table-wrapper">
-      <table id="registryTable" hidden>
-        <thead>
-          <tr>
-            <th>Hash (FNV-1a)</th>
-            <th>Name</th>
-            <th>Area</th>
-            <th>Verdict</th>
-            <th>Score</th>
-            <th>Reported</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-
-    <div class="row">
-      <button id="exportCsv">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-          <polyline points="7 10 12 15 17 10"/>
-          <line x1="12" y1="15" x2="12" y2="3"/>
-        </svg>
-        Export CSV for Snowflake
+    <!-- Mode Selector Tabs -->
+    <div class="section-tabs">
+      <button type="button" id="tabScans" class="tab-btn active">
+        <span>📋 Street Scans Telemetry</span>
+        <span class="tab-badge" id="scansCountBadge">0</span>
       </button>
+      <button type="button" id="tabSnowflake" class="tab-btn">
+        <span>❄️ Snowflake CoCo Intelligence</span>
+        <span class="tab-badge highlight">MLH Track</span>
+      </button>
+    </div>
+
+    <!-- VIEW 1: Street Scans Table -->
+    <div id="viewScansTab">
+      <div class="registry-actions-bar">
+        <div class="btn-group-left">
+          <button type="button" id="seedTelemetryBtn" class="micro-btn primary-action">
+            📥 Load Demo Street Telemetry
+          </button>
+          <button type="button" id="clearRegistryBtn" class="micro-btn">
+            🧹 Clear Registry
+          </button>
+        </div>
+        <div class="btn-group-right">
+          <button id="exportCsv" type="button" class="micro-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Export CSV for Snowflake
+          </button>
+        </div>
+      </div>
+
+      <div id="registryEmpty" class="hint">
+        No finds logged yet. Click <strong>"📥 Load Demo Street Telemetry"</strong> or test a sample above to populate.
+      </div>
+
+      <div class="table-wrapper">
+        <table id="registryTable" hidden>
+          <thead>
+            <tr>
+              <th>Hash (FNV-1a)</th>
+              <th>Name</th>
+              <th>Area</th>
+              <th>Verdict</th>
+              <th>Score</th>
+              <th>Reported</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- VIEW 2: Snowflake CoCo Intelligence Panel -->
+    <div id="viewSnowflakeTab" hidden>
+      <div class="snowflake-banner">
+        <div class="snowflake-badge-row">
+          <span class="track-tag">❄️ SNOWFLAKE CoCo (CORTEX CODE)</span>
+          <span class="track-tag">🌐 CYBERSYN MARKETPLACE POI</span>
+          <span class="track-tag">🤖 GEMMA 4 OPEN-WEIGHT AI</span>
+        </div>
+        <p class="snowflake-desc">
+          Automated threat intelligence views engineered with <strong>Snowflake Cortex Code (CoCo)</strong>, joining community street audits with <strong>Cybersyn: Point of Interest & Business Open Data</strong> from Snowflake Marketplace to catch sticker-swap fraud and feed Gemma 4 localized risk briefs.
+        </p>
+        <div class="snowflake-links">
+          <a href="https://signup.snowflake.com/cortex-code/" target="_blank" rel="noopener">Cortex Code Portal ↗</a>
+          <a href="https://docs.snowflake.com/en/collaboration/consumer-listings-exploring" target="_blank" rel="noopener">Cybersyn Marketplace Listing ↗</a>
+          <a href="https://docs.snowflake.com/en/user-guide/sample-data" target="_blank" rel="noopener">Snowflake Sample Data ↗</a>
+        </div>
+      </div>
+
+      <!-- Sub-tabs within Snowflake Panel -->
+      <div class="coco-subnav">
+        <button type="button" class="subnav-btn active" data-sub="hotspots">📍 Neighborhood Hotspots</button>
+        <button type="button" class="subnav-btn" data-sub="anomalies">🛡️ Sticker-Swap Anomalies</button>
+        <button type="button" class="subnav-btn" data-sub="gemma">🤖 Gemma AI Brief Feed</button>
+        <button type="button" class="subnav-btn" data-sub="sql">📜 CoCo SQL DDL</button>
+      </div>
+
+      <!-- Sub-view 1: Hotspots -->
+      <div id="cocoSubHotspots" class="coco-subcontent">
+        <div class="subview-header">
+          <h4>V_FRAUD_HOTSPOTS_BY_AREA</h4>
+          <span class="hint">Aggregated threat density & fraud percentages by locality</span>
+        </div>
+        <div class="table-wrapper">
+          <table id="cocoHotspotsTable">
+            <thead>
+              <tr>
+                <th>Locality</th>
+                <th>Total Scans</th>
+                <th>Threats</th>
+                <th>Fraud Rate</th>
+                <th>Avg Score</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Sub-view 2: Anomalies -->
+      <div id="cocoSubAnomalies" class="coco-subcontent" hidden>
+        <div class="subview-header">
+          <h4>V_STICKER_SWAP_ANOMALIES</h4>
+          <span class="hint">Cross-referenced with Cybersyn Verified Merchant POI dataset</span>
+        </div>
+        <div class="table-wrapper">
+          <table id="cocoAnomaliesTable">
+            <thead>
+              <tr>
+                <th>Scanned Merchant</th>
+                <th>Locality</th>
+                <th>Registered POI Entity</th>
+                <th>Classification</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Sub-view 3: Gemma Feed -->
+      <div id="cocoSubGemma" class="coco-subcontent" hidden>
+        <div class="subview-header">
+          <h4>V_GEMMA_AI_NEIGHBOURHOOD_BRIEF</h4>
+          <span class="hint">Structured corridors feeding Gemma 4 vernacular debriefs</span>
+        </div>
+        <div id="cocoGemmaCards" class="gemma-brief-cards"></div>
+      </div>
+
+      <!-- Sub-view 4: SQL DDL -->
+      <div id="cocoSubSql" class="coco-subcontent" hidden>
+        <div class="subview-header">
+          <h4>Snowflake DDL & Pipeline Queries</h4>
+          <button type="button" id="copySqlBtn" class="micro-btn">📋 Copy SQL</button>
+        </div>
+        <pre class="sql-box" id="sqlBox"><code>-- ============================================================================
+-- Snowflake CoCo Analytics Pipeline Views
+-- ============================================================================
+
+-- 1. Neighborhood Threat Aggregations
+CREATE OR REPLACE VIEW TRAILQR.REGISTRY.V_FRAUD_HOTSPOTS_BY_AREA AS
+SELECT
+  coarse_area,
+  COUNT(*) AS total_scans,
+  COUNT(CASE WHEN verdict = 'DANGEROUS' OR reported = TRUE THEN 1 END) AS threat_count,
+  ROUND(100.0 * COUNT(CASE WHEN verdict = 'DANGEROUS' OR reported = TRUE THEN 1 END) / NULLIF(COUNT(*), 0), 1) AS fraud_rate_pct,
+  ROUND(AVG(score), 1) AS avg_threat_score
+FROM TRAILQR.REGISTRY.QR_REGISTRY
+GROUP BY coarse_area
+ORDER BY threat_count DESC;
+
+-- 2. Sticker-Swap Anomaly Detection (Cybersyn POI Cross-Reference)
+CREATE OR REPLACE VIEW TRAILQR.REGISTRY.V_STICKER_SWAP_ANOMALIES AS
+SELECT
+  r.qr_hash,
+  r.display_name AS scanned_name,
+  r.coarse_area,
+  c.merchant_name AS registered_merchant_name,
+  CASE
+    WHEN c.merchant_name IS NULL THEN 'UNREGISTERED_ENTITY_IN_AREA'
+    WHEN r.reported = TRUE OR r.verdict = 'DANGEROUS' THEN 'COMMUNITY_REPORTED_STICKER_SWAP'
+    ELSE 'VERIFIED_CLEAN_MERCHANT'
+  END AS anomaly_classification
+FROM TRAILQR.REGISTRY.QR_REGISTRY r
+LEFT JOIN TRAILQR.REGISTRY.CYBERSYN_VERIFIED_MERCHANTS c
+  ON LOWER(r.coarse_area) = LOWER(c.coarse_area)
+  AND LOWER(r.display_name) LIKE '%' || LOWER(c.merchant_name) || '%';
+
+-- 3. Feed for Gemma 4 Vernacular Security Debriefs
+CREATE OR REPLACE VIEW TRAILQR.REGISTRY.V_GEMMA_AI_NEIGHBOURHOOD_BRIEF AS
+SELECT
+  h.coarse_area,
+  h.total_scans,
+  h.threat_count,
+  h.fraud_rate_pct,
+  CASE
+    WHEN h.fraud_rate_pct >= 50.0 THEN 'HIGH_RISK_CORRIDOR'
+    WHEN h.fraud_rate_pct >= 20.0 THEN 'ELEVATED_CAUTION'
+    ELSE 'GENERALLY_SAFE_COMMUNITY'
+  END AS security_tier
+FROM TRAILQR.REGISTRY.V_FRAUD_HOTSPOTS_BY_AREA h;</code></pre>
+      </div>
     </div>
   </section>
 </main>

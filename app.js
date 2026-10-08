@@ -175,6 +175,7 @@
 
   function renderRegistry() {
     var rows = window.TrailQRRegistry.load();
+    if ($("scansCountBadge")) $("scansCountBadge").textContent = rows.length;
     $("registryEmpty").hidden = rows.length > 0;
     var table = $("registryTable");
     table.hidden = rows.length === 0;
@@ -215,6 +216,81 @@
     });
 
     updateStats(rows);
+    renderSnowflakeIntelligence(rows);
+  }
+
+  function renderSnowflakeIntelligence(rows) {
+    if (!window.TrailQRRegistry || !window.TrailQRRegistry.computeViews) return;
+    var intel = window.TrailQRRegistry.computeViews(rows);
+
+    // 1. Hotspots Table
+    var hsTable = $("cocoHotspotsTable");
+    if (hsTable) {
+      var hsBody = hsTable.querySelector("tbody");
+      if (hsBody) {
+        hsBody.innerHTML = "";
+        if (!intel.hotspots.length) {
+          hsBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:18px;">No street scan telemetry loaded yet. Click "Load Demo Street Telemetry" to populate.</td></tr>';
+        } else {
+          intel.hotspots.forEach(function (h) {
+            var tr = document.createElement("tr");
+            var rateColor = h.fraudRate >= 50 ? "var(--signal-danger)" : (h.fraudRate >= 20 ? "var(--signal-caution)" : "var(--signal-safe)");
+            tr.innerHTML = '<td><strong>' + h.area + '</strong></td>' +
+              '<td>' + h.scans + '</td>' +
+              '<td style="color:' + (h.threats > 0 ? "var(--signal-danger)" : "var(--signal-safe)") + ';font-weight:700;">' + h.threats + '</td>' +
+              '<td style="color:' + rateColor + ';font-weight:700;">' + h.fraudRate.toFixed(1) + '%</td>' +
+              '<td>' + h.avgScore.toFixed(1) + '/100</td>';
+            hsBody.appendChild(tr);
+          });
+        }
+      }
+    }
+
+    // 2. Anomalies Table
+    var anTable = $("cocoAnomaliesTable");
+    if (anTable) {
+      var anBody = anTable.querySelector("tbody");
+      if (anBody) {
+        anBody.innerHTML = "";
+        if (!intel.anomalies.length) {
+          anBody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:18px;">No scanned merchants to cross-reference against Cybersyn POI database.</td></tr>';
+        } else {
+          intel.anomalies.forEach(function (a) {
+            var tr = document.createElement("tr");
+            var pillClass = a.badgeClass || "dim";
+            var verdictClass = pillClass === 'safe' ? 'safe' : (pillClass === 'danger' ? 'dangerous' : (pillClass === 'caution' ? 'caution' : ''));
+            tr.innerHTML = '<td><strong>' + a.displayName + '</strong>' + (a.payeeMasked ? '<br><code style="font-size:11px;color:var(--text-secondary);">' + a.payeeMasked + '</code>' : '') + '</td>' +
+              '<td>' + a.area + '</td>' +
+              '<td>' + a.registeredMerchant + '</td>' +
+              '<td><span class="verdict-pill ' + verdictClass + '">' + a.classification + '</span></td>';
+            anBody.appendChild(tr);
+          });
+        }
+      }
+    }
+
+    // 3. Gemma Brief Feed Cards
+    var gemmaCards = $("cocoGemmaCards");
+    if (gemmaCards) {
+      gemmaCards.innerHTML = "";
+      if (!intel.gemmaFeed.length) {
+        gemmaCards.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:12px;">No corridors available. Populate scans to generate Gemma 4 intelligence feed.</div>';
+      } else {
+        intel.gemmaFeed.forEach(function (g) {
+          var div = document.createElement("div");
+          var riskClass = g.securityTier === "HIGH_RISK_CORRIDOR" ? "high-risk" : (g.securityTier === "ELEVATED_CAUTION" ? "caution-risk" : "safe-risk");
+          div.className = "gemma-brief-card " + riskClass;
+          div.innerHTML = '<div class="brief-card-title">' + g.area + '</div>' +
+            '<div class="brief-card-meta">' +
+              '<strong>Security Tier:</strong> <code>' + g.securityTier + '</code><br>' +
+              '<strong>Threat Probability:</strong> ' + g.fraudRate + ' · Avg Risk: ' + g.avgScore + '<br>' +
+              '<strong>Sticker-Swap Incidents:</strong> ' + g.swapIncidents + '<br>' +
+              '<span style="display:inline-block;margin-top:6px;color:var(--chalk-dim);">Feeds Gemma 4 localized risk debrief</span>' +
+            '</div>';
+          gemmaCards.appendChild(div);
+        });
+      }
+    }
   }
 
   // -------------------------------------------------------------
@@ -338,6 +414,88 @@
     a.click();
     URL.revokeObjectURL(a.href);
   });
+
+  // Section 3: Telemetry Seeding & Registry Clear
+  var seedBtn = $("seedTelemetryBtn");
+  if (seedBtn) {
+    seedBtn.addEventListener("click", function () {
+      playPencilTap();
+      window.TrailQRRegistry.seedDemoData();
+      renderRegistry();
+      $("scanNote").textContent = "📥 Pre-loaded 5 realistic Kolkata street audits into the registry table. Switch to Snowflake CoCo tab to view intelligence.";
+    });
+  }
+
+  var clearRegBtn = $("clearRegistryBtn");
+  if (clearRegBtn) {
+    clearRegBtn.addEventListener("click", function () {
+      playPencilTap();
+      window.TrailQRRegistry.clear();
+      renderRegistry();
+      $("scanNote").textContent = "Community registry cleared.";
+    });
+  }
+
+  // Section 3: Mode Selector Tabs (Scans vs Snowflake)
+  var tabScans = $("tabScans");
+  var tabSnowflake = $("tabSnowflake");
+  var viewScansTab = $("viewScansTab");
+  var viewSnowflakeTab = $("viewSnowflakeTab");
+
+  if (tabScans && tabSnowflake) {
+    tabScans.addEventListener("click", function () {
+      playPencilTap();
+      tabScans.classList.add("active");
+      tabSnowflake.classList.remove("active");
+      if (viewScansTab) viewScansTab.hidden = false;
+      if (viewSnowflakeTab) viewSnowflakeTab.hidden = true;
+    });
+
+    tabSnowflake.addEventListener("click", function () {
+      playPencilTap();
+      tabSnowflake.classList.add("active");
+      tabScans.classList.remove("active");
+      if (viewScansTab) viewScansTab.hidden = true;
+      if (viewSnowflakeTab) viewSnowflakeTab.hidden = false;
+      renderSnowflakeIntelligence(window.TrailQRRegistry.load());
+    });
+  }
+
+  // Snowflake Panel: Subnav Buttons
+  var subnavBtns = document.querySelectorAll(".coco-subnav .subnav-btn");
+  subnavBtns.forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      playPencilTap();
+      subnavBtns.forEach(function (b) { b.classList.remove("active"); });
+      btn.classList.add("active");
+      var sub = btn.getAttribute("data-sub");
+      var subs = {
+        hotspots: $("cocoSubHotspots"),
+        anomalies: $("cocoSubAnomalies"),
+        gemma: $("cocoSubGemma"),
+        sql: $("cocoSubSql")
+      };
+      Object.keys(subs).forEach(function (k) {
+        if (subs[k]) subs[k].hidden = (k !== sub);
+      });
+    });
+  });
+
+  // Copy SQL Button
+  var copySqlBtn = $("copySqlBtn");
+  if (copySqlBtn) {
+    copySqlBtn.addEventListener("click", async function () {
+      playPencilTap();
+      var code = $("sqlBox") ? $("sqlBox").innerText : "";
+      try {
+        await navigator.clipboard.writeText(code);
+        copySqlBtn.textContent = "✓ Copied to Clipboard!";
+        setTimeout(function () { copySqlBtn.textContent = "📋 Copy SQL"; }, 2000);
+      } catch (e) {
+        $("scanNote").textContent = "Could not copy SQL automatically.";
+      }
+    });
+  }
 
   // Camera QR scan support — native BarcodeDetector where available
   // (macOS/ChromeOS/Android), jsQR polyfill fallback for Windows/desktop

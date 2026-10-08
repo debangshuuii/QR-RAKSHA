@@ -1,3 +1,4 @@
 config.js
 *.csv
+!snowflake/trailqr_registry.csv
 .DS_Store

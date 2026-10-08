@@ -1,10 +1,10 @@
 # TrailQR Raksha — Check a QR Before You Pay
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Node.js Tests](https://img.shields.io/badge/tests-6%20passed-brightgreen.svg)](#tests)
+[![Node.js Tests](https://img.shields.io/badge/tests-7%20passed-brightgreen.svg)](#tests)
 [![Track](https://img.shields.io/badge/OWASP-AI%20in%20Cybersecurity-red.svg)](#tracks-entered)
 [![Track](https://img.shields.io/badge/Google-Gemma%204-blue.svg)](#tracks-entered)
-[![Track](https://img.shields.io/badge/Snowflake-CoCo-lightblue.svg)](#tracks-entered)
+[![Track](https://img.shields.io/badge/Snowflake-CoCo%20%26%20Marketplace-lightblue.svg)](#tracks-entered)
 
 Kolkata — and India — runs on QR codes. Tea stalls, taxis, parking, donations, ticket counters: you scan, you pay, you move on. One sticker pasted over a shop's real QR and your payment goes to a scammer, or a "KYC verify" QR takes you to a credential phishing site. You cannot see where a QR goes until it is too late.
 
@@ -59,8 +59,14 @@ Kolkata — and India — runs on QR codes. Tea stalls, taxis, parking, donation
   Open-weight AI (Gemma) powers user-friendly explanations and localized quests. Public MIT repository. Includes a standardized Agent Skill in `skills/qr-audit/SKILL.md`.
 * **Google Gemma Challenge:**
   Utilizes Gemma 4 via the Gemini API with a deterministic offline fallback to guarantee street-level reliability even on flaky mobile networks.
-* **Snowflake Challenge:**
-  Combines Snowflake CoCo, public dataset querying, and privacy-scrubbed QR threat data. Registry schema in `snowflake/schema.sql` and CoCo queries in `snowflake/COCO.md`.
+* **Snowflake Challenge — Best Open-Source AI Project with Snowflake:**
+  Meets all three required MLH elements:
+  1. **Snowflake CoCo (Cortex Code):** Explored Snowflake Marketplace datasets and generated threat analytics views ([snowflake/COCO.md](snowflake/COCO.md)).
+  2. **Freely Accessible Dataset in Snowflake:** Uses **Cybersyn: Point of Interest & Business Open Data** from Snowflake Marketplace ([Exploring Listings Guide](https://docs.snowflake.com/en/collaboration/consumer-listings-exploring)) alongside pre-loaded sample data ([Snowflake Sample Data Guide](https://docs.snowflake.com/en/user-guide/sample-data)).
+  3. **Open-Weight AI Integration:** Cross-references community QR scans with Cybersyn POI to detect sticker-swap fraud (`V_STICKER_SWAP_ANOMALIES`) and feeds structured risk tiers (`V_GEMMA_AI_NEIGHBOURHOOD_BRIEF`) into **Google Gemma 4** for localized vernacular security briefs.
+  - Complete schema DDL: [snowflake/schema.sql](snowflake/schema.sql)
+  - Executable data pipeline: [snowflake/pipeline.js](snowflake/pipeline.js) & [snowflake/pipeline.py](snowflake/pipeline.py)
+  - Official Cortex Code tooling: [Cortex Code Portal](https://signup.snowflake.com/cortex-code/) & [Docs](https://docs.snowflake.com/en/user-guide/cortex-code/cortex-code)
 * **AI in Cybersecurity (OWASP JIS University):**
   - **Attack:** QR Sticker swap (UPI redirection) & Phishing QR (KYC credential harvesting).
   - **Vulnerability:** Blind trust in opaque barcodes; payment apps reveal payees only *inside* the transaction flow.
@@ -106,13 +112,14 @@ Run the built-in Node test suite:
 node --test tests/rules.test.mjs
 ```
 
-Covers 6 core automated security assertions:
+Covers 7 core automated security assertions:
 - Safe merchant UPI returns `SAFE`
 - Sticker swap returns `DANGEROUS` (name mismatch + random payee + pre-filled amount)
 - Phishing link returns `DANGEROUS` (insecure HTTP + brand spoofing + pressure keywords)
 - Scrubbed registry row never contains raw payee or raw payload
 - Payee masking properly conceals sensitive handles
 - Shortened URLs trigger risk warnings
+- EMVCo BharatQR merchant code (Techno Main Salt Lake) returns `SAFE` and verifies registered business entity
 
 ---
 

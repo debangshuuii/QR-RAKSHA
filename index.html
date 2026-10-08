@@ -51,7 +51,7 @@
       <button type="button" class="nav-item" data-view="viewMap" id="navItemMap">
         <span class="nav-icon">🗺️</span>
         <span class="nav-label" data-i18n="navMap">Threat Map</span>
-        <span class="nav-badge danger" id="sidebarThreatCount">2 Flags</span>
+        <span class="nav-badge danger" id="sidebarThreatCount">0 Flags</span>
       </button>
 
       <button type="button" class="nav-item" data-view="viewRegistry" id="navItemRegistry">
@@ -336,9 +336,10 @@
 
         <div class="map-controls-bar">
           <div class="map-filter-group">
-            <button type="button" class="micro-btn active" data-map-filter="all" data-i18n="filterAll">All Locations</button>
+            <button type="button" class="micro-btn active" data-map-filter="all" data-i18n="filterAll">All Scans</button>
             <button type="button" class="micro-btn filter-danger-btn" data-map-filter="danger" data-i18n="filterDanger">🔴 Red Flags Only</button>
             <button type="button" class="micro-btn filter-safe-btn" data-map-filter="safe" data-i18n="filterSafe">🟢 Safe Spots Only</button>
+            <button type="button" class="micro-btn locate-me-btn" id="locateMeBtn">📍 Locate Me (Live)</button>
           </div>
 
           <div class="map-search-wrap">
@@ -346,9 +347,24 @@
           </div>
         </div>
 
+        <!-- Live Location & Nearby Scanned Details Card -->
+        <div class="nearby-status-card" id="nearbyStatusCard" style="display: none;">
+          <div class="nearby-status-header">
+            <span class="pulse-dot"></span>
+            <strong id="nearbyLocationTitle">📍 Live Location: Detecting...</strong>
+            <span class="nearby-dist-badge" id="nearbyDistanceBadge">—</span>
+          </div>
+          <div class="nearby-status-content" id="nearbyDetailsContent">
+            Acquiring your location to show nearby scanned threat telemetry...
+          </div>
+        </div>
+
         <!-- Leaflet Map Container -->
         <div class="threat-map-wrapper">
           <div id="threatMapContainer"></div>
+          <div id="mapEmptyOverlay" class="map-empty-overlay" style="display: none;">
+            <span>ℹ️ Zero scans recorded yet. Scan a QR code in the Scanner or click "📍 Locate Me" to map your real local audits.</span>
+          </div>
         </div>
 
         <!-- Map Summary Legend Bar -->
@@ -362,7 +378,7 @@
             <span data-i18n="mapLegendSafe">Verified Authentic Merchant</span>
           </div>
           <div class="legend-stats">
-            <span>Total Mapped: <strong id="mapStatTotal">0</strong></span>
+            <span>Real Scans Mapped: <strong id="mapStatTotal">0</strong></span>
             <span>· Active Red Flags: <strong id="mapStatDanger" style="color:var(--signal-danger)">0</strong></span>
             <span>· Verified Safe: <strong id="mapStatSafe" style="color:var(--signal-safe)">0</strong></span>
           </div>

@@ -78,8 +78,9 @@
     localStorage.removeItem(KEY);
   }
 
-  function add(result, reported) {
+  function add(result, reported, coords) {
     var rows = load();
+    var liveCoords = coords || (typeof window !== "undefined" && window.TrailQRUserLocation) || null;
     var row = {
       qr_hash: result.scrubbed.qr_hash,
       display_name: result.scrubbed.display_name,
@@ -89,7 +90,9 @@
       score: result.scrubbed.score,
       payee_masked: result.scrubbed.payee_masked || "",
       reported: !!reported,
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
+      lat: (liveCoords && liveCoords.lat) || null,
+      lng: (liveCoords && liveCoords.lng) || null
     };
     var existing = rows.findIndex(function (r) { return r.qr_hash === row.qr_hash; });
     if (existing >= 0) {

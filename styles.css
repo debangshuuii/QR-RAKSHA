@@ -1126,12 +1126,118 @@ video {
   font-size: 12px;
 }
 
+.locate-me-btn {
+  background: var(--bg-card);
+  border: 1px solid var(--border-medium);
+  color: var(--text-primary);
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.locate-me-btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--text-primary);
+}
+
+.locate-me-btn.locating {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.nearby-status-card {
+  margin-bottom: 14px;
+  padding: 12px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  animation: fadeIn 0.2s ease;
+}
+
+.nearby-status-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.nearby-dist-badge {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-input);
+  border: 1px solid var(--border-hairline);
+  color: var(--text-secondary);
+}
+
+.nearby-status-content {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.nearby-status-content strong {
+  color: var(--text-primary);
+}
+
 .threat-map-wrapper {
+  position: relative;
   border: 1px solid var(--border-medium);
   border-radius: var(--radius-lg);
   overflow: hidden;
   background: #000;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.map-empty-overlay {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(14, 16, 21, 0.94);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  padding: 10px 18px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  z-index: 1000;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+  white-space: nowrap;
+}
+
+/* User Live Position Pin */
+.user-live-pin {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #3b82f6;
+  border: 2px solid #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  position: relative;
+  box-shadow: 0 0 14px rgba(59, 130, 246, 0.85);
+}
+
+.user-pulse {
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  border: 2px solid #3b82f6;
+  opacity: 0.8;
+  animation: radarPing 1.8s infinite ease-out;
+  pointer-events: none;
 }
 
 #threatMapContainer {

@@ -2,7 +2,7 @@
   "harness": "TrailQR Open-Weight AI Evaluation Harness v1.0",
   "model_under_test": "Google Gemma 4 (Multilingual Vernacular Explainer)",
   "standard": "Agent Skill Open Standard + Heuristic Non-Regression SLA",
-  "timestamp": "2026-10-08T09:20:38.809Z",
+  "timestamp": "2026-10-08T09:34:56.584Z",
   "total_fixtures": 4,
   "total_assertions": 16,
   "passed_assertions": 16,
@@ -14,7 +14,7 @@
       "verdict": "SAFE",
       "verdict_expected": "SAFE",
       "passed": true,
-      "latency_ms": 0.095,
+      "latency_ms": 0.107,
       "checks": {
         "verdict_alignment": true,
         "vernacular_tokens": true,
@@ -42,7 +42,7 @@
       "verdict": "DANGEROUS",
       "verdict_expected": "DANGEROUS",
       "passed": true,
-      "latency_ms": 0.087,
+      "latency_ms": 0.056,
       "checks": {
         "verdict_alignment": true,
         "vernacular_tokens": true,
@@ -56,7 +56,7 @@
       "verdict": "SAFE",
       "verdict_expected": "SAFE",
       "passed": true,
-      "latency_ms": 0.139,
+      "latency_ms": 0.274,
       "checks": {
         "verdict_alignment": true,
         "vernacular_tokens": true,

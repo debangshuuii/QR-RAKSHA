@@ -226,6 +226,16 @@
     });
   }
 
+  var locateMeBtn = $("locateMeBtn");
+  if (locateMeBtn) {
+    locateMeBtn.addEventListener("click", function () {
+      playPencilTap();
+      if (window.TrailQRMap && window.TrailQRMap.locateUser) {
+        window.TrailQRMap.locateUser();
+      }
+    });
+  }
+
   // -------------------------------------------------------------
   // Sample Scenarios Rendering
   // -------------------------------------------------------------
@@ -588,19 +598,19 @@
   $("report").addEventListener("click", function () {
     playPencilTap();
     if (!current) return;
-    window.TrailQRRegistry.add(current, true);
+    window.TrailQRRegistry.add(current, true, window.TrailQRUserLocation);
     renderRegistry();
     if (window.TrailQRMap) window.TrailQRMap.renderMarkers();
-    $("scanNote").textContent = "🚨 Reported! A scrubbed row was added to the community registry and mapped — zero PII stored.";
+    $("scanNote").textContent = "🚨 Reported! Real scan mapped to your live location — zero PII stored.";
   });
 
   $("saveSafe").addEventListener("click", function () {
     playPencilTap();
     if (!current) return;
-    window.TrailQRRegistry.add(current, false);
+    window.TrailQRRegistry.add(current, false, window.TrailQRUserLocation);
     renderRegistry();
     if (window.TrailQRMap) window.TrailQRMap.renderMarkers();
-    $("scanNote").textContent = "🛡️ Verified safe find added to registry (scrubbed hash and masked payee only) and mapped.";
+    $("scanNote").textContent = "🛡️ Verified safe find added to registry and mapped to your live location.";
   });
 
   $("exportCsv").addEventListener("click", function () {

@@ -161,7 +161,7 @@ Covers 8 core automated security & AI assertions:
 | Member Name | Role / Focus | College / Institute | Year & Department |
 | :--- | :--- | :--- | :--- |
 | **Sudipta Sanki** | Security Architecture & Deterministic Engine | Techno Main Salt Lake (TMSL) | 2nd Year, CSE |
-| **Soumyabrata Mukherjee** | AI Integration & Gemma Explanations | Techno Main Salt Lake (TMSL) | 2nd Year, CSE |
+| **Soumyabrata Mukherjee** | AI Integration & Gemma Explanations | RCC Institute of Information Technology | 3rd Year, CSE |
 | **Debangshu Sinha** | Full-Stack Interface, Registry & Snowflake | Techno Main Salt Lake (TMSL) | 2nd Year, CSE |
 
 * **Event:** Hacktoberfest Hack Day × OWASP JIS University, Kolkata
